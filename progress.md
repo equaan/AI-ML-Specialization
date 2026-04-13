@@ -44,6 +44,7 @@
 - Created [`backend/tools/pubmed_tool.py`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/backend/tools/pubmed_tool.py) for PubMed `esearch` and `efetch`
 - Created [`backend/rag/embedder.py`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/backend/rag/embedder.py) with lazy BioBERT loading and a deterministic fallback embedding path for low-resource development
 - Created [`scripts/ingest_medqa.py`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/scripts/ingest_medqa.py) to chunk and ingest MedQA into ChromaDB
+- Created [`scripts/ingest_pubmed.py`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/scripts/ingest_pubmed.py) to fetch and ingest PubMed abstracts into ChromaDB
 - Created [`backend/agents/vision_agent.py`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/backend/agents/vision_agent.py)
 - Created [`backend/agents/rag_agent.py`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/backend/agents/rag_agent.py)
 - Created [`backend/agents/report_agent.py`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/backend/agents/report_agent.py)
@@ -51,9 +52,15 @@
 
 ### Tests written
 - Added [`tests/test_api.py`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/tests/test_api.py)
+- Added [`tests/test_api_analysis_contract.py`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/tests/test_api_analysis_contract.py)
+- Added [`tests/test_pdf_parser.py`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/tests/test_pdf_parser.py)
+- Added [`tests/test_report_agent.py`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/tests/test_report_agent.py)
 - Added [`tests/test_vision_agent.py`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/tests/test_vision_agent.py)
 - Added [`tests/test_rag_agent.py`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/tests/test_rag_agent.py)
 - Added [`tests/test_pipeline.py`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/tests/test_pipeline.py)
+
+### Backend realism improvements
+- Upgraded [`backend/agents/report_agent.py`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/backend/agents/report_agent.py) so it is now ready to call Ollama for report synthesis when available, while still falling back safely on this lower-power machine
 
 ### Frontend scaffolding
 - Created [`frontend/package.json`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/frontend/package.json) and [`frontend/vite.config.js`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/frontend/vite.config.js)
@@ -127,7 +134,6 @@
 
 ## What I verified locally
 
-- Python source compilation passed with:
 - Python source compilation passed with:
 
 ```powershell
@@ -205,6 +211,12 @@ python scripts/setup_chromadb.py
 pytest
 ```
 
+If you want to target only the new backend-focused tests first:
+
+```powershell
+pytest tests/test_api.py tests/test_api_analysis_contract.py tests/test_pdf_parser.py tests/test_report_agent.py tests/test_rag_agent.py tests/test_pipeline.py
+```
+
 ### 7. Install frontend dependencies and run the UI
 
 ```powershell
@@ -232,6 +244,7 @@ Then open:
    - evidence page shows sources
    - lab page shows parsed lab values
    - export buttons open PDF/Markdown/JSON
+   - voice recorder transcribes and fills the transcript box
 
 ## Datasets to download into the root directory
 
@@ -277,9 +290,9 @@ Put the downloaded assets here:
 3. Tell me once that machine is ready.
 4. Meanwhile, I can keep building:
    - frontend refinements
-   - better report generation with live Ollama
    - richer tests and fixtures
    - deeper backend/runtime validation helpers
+   - README and portfolio polish that does not require full runtime access
 
 ## Notes
 

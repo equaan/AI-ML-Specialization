@@ -1,7 +1,12 @@
 from __future__ import annotations
 
+import json
 from typing import Any
 
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_ollama import ChatOllama
+
+from backend.config import get_settings
 from backend.models.schemas import (
     DISCLAIMER_TEXT,
     ClinicalReport,
@@ -29,6 +34,10 @@ LIKELIHOOD_TO_SCORE = {
 
 
 class ReportAgent:
+    def __init__(self, llm: ChatOllama | None = None) -> None:
+        self.settings = get_settings()
+        self.llm = llm
+
     def generate(
         self,
         patient_symptoms: str,
@@ -37,19 +46,10 @@ class ReportAgent:
     ) -> ClinicalReport:
         vision = self._normalize_vision(vision_findings)
         rag = self._normalize_rag(rag_context)
-        diagnoses = self._build_differential_diagnosis(rag, vision)
-        red_flags = self._derive_red_flags(patient_symptoms, vision)
-        urgency = self._estimate_urgency(red_flags)
-
-        return ClinicalReport(
-            patient_summary=self._patient_summary(patient_symptoms, vision, rag),
-            differential_diagnosis=diagnoses,
-            red_flags=red_flags,
-            recommended_next_steps=self._recommended_next_steps(diagnoses, red_flags),
-            estimated_urgency=urgency,
-            additional_history_needed=rag.missing_information,
-            disclaimer=DISCLAIMER_TEXT,
-        )
+        llm_report = self._generate_with_llm(patient_symptoms, vision, rag)
+        if llm_report is not None:
+            return llm_report
+        return self._generate_fallback_report(patient_symptoms, vision, rag)
 
     @staticmethod
     def _normalize_vision(vision_findings: VisionFindings | dict[str, Any] | None) -> VisionFindings:
@@ -66,6 +66,65 @@ class ReportAgent:
         if isinstance(rag_context, dict):
             return RAGContext.model_validate(rag_context)
         return RAGContext()
+
+    def _generate_with_llm(
+        self,
+        patient_symptoms: str,
+        vision: VisionFindings,
+        rag: RAGContext,
+    ) -> ClinicalReport | None:
+        if self.llm is None:
+            try:
+                self.llm = ChatOllama(
+                    model=self.settings.ollama_model,
+                    base_url=self.settings.ollama_base_url,
+                    temperature=0.1,
+                    format="json",
+                )
+            except Exception:
+                return None
+
+        prompt = (
+            "Generate a structured clinical report as valid JSON with keys "
+            "patient_summary, differential_diagnosis, red_flags, recommended_next_steps, "
+            "estimated_urgency, additional_history_needed, disclaimer.\n\n"
+            f"Symptoms: {patient_symptoms}\n"
+            f"Vision findings: {vision.model_dump_json()}\n"
+            f"RAG context: {rag.model_dump_json()}\n"
+            f'Disclaimer must be exactly: "{DISCLAIMER_TEXT}"'
+        )
+
+        try:
+            response = self.llm.invoke(
+                [
+                    SystemMessage(content="You are a clinical decision support report generator. Return only JSON."),
+                    HumanMessage(content=prompt),
+                ]
+            )
+            data = json.loads(response.content)
+            return ClinicalReport.model_validate(data)
+        except Exception:
+            return None
+
+    def _generate_fallback_report(
+        self,
+        patient_symptoms: str,
+        vision: VisionFindings,
+        rag: RAGContext,
+    ) -> ClinicalReport:
+        diagnoses = self._build_differential_diagnosis(rag, vision)
+        red_flags = self._derive_red_flags(patient_symptoms, vision)
+        urgency = self._estimate_urgency(red_flags)
+
+        return ClinicalReport(
+            patient_summary=self._patient_summary(patient_symptoms, vision, rag),
+            differential_diagnosis=diagnoses,
+            red_flags=red_flags,
+            recommended_next_steps=self._recommended_next_steps(diagnoses, red_flags),
+            estimated_urgency=urgency,
+            additional_history_needed=rag.missing_information,
+            disclaimer=DISCLAIMER_TEXT,
+        )
 
     def _build_differential_diagnosis(self, rag: RAGContext, vision: VisionFindings) -> list[DifferentialDiagnosis]:
         diagnoses: list[DifferentialDiagnosis] = []

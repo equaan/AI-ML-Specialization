@@ -26,7 +26,7 @@
 - [ ] Install ChromaDB (`pip install chromadb`)
 - [x] Create `backend/rag/vectorstore.py` with collection init
 - [x] Create three collections: `medqa_chunks`, `pubmed_abstracts`, `medical_guidelines`
-- [ ] Write and test `scripts/setup_chromadb.py`
+- [x] Write and test `scripts/setup_chromadb.py`
 
 ### FastAPI Skeleton
 - [x] Create `backend/main.py` with `GET /api/health` endpoint
@@ -100,7 +100,7 @@ Phase 1 Done When: Both agents return valid Pydantic objects when called individ
 ### Report Agent
 - [x] Create `backend/agents/report_agent.py`
   - [x] Accepts merged Vision + RAG state
-  - [ ] LLaMA 3.1 8B call via Ollama
+  - [x] LLaMA 3.1 8B call via Ollama
   - [x] Structured output -> `ClinicalReport` Pydantic schema
   - [x] ICD-10 code mapping (use static dict for top-50 conditions)
   - [x] Disclaimer injection (always appended, never skippable)
