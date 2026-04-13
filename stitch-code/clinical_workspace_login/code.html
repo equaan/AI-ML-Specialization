@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MediAgent | Clinical Workspace Access</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary": "#0051d5",
+                    "surface-container": "#eceef0",
+                    "primary": "#000f22",
+                    "on-background": "#191c1e",
+                    "surface": "#f7f9fb",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "tertiary": "#001209",
+                    "on-primary-container": "#768dad",
+                    "inverse-primary": "#b0c8eb",
+                    "on-secondary-container": "#fefcff",
+                    "tertiary-fixed": "#6ffbbe",
+                    "outline-variant": "#c4c6ce",
+                    "error": "#ba1a1a",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "outline": "#74777e",
+                    "surface-container-high": "#e6e8ea",
+                    "primary-container": "#0a2540",
+                    "on-error-container": "#93000a",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-secondary-fixed": "#00174b",
+                    "on-primary": "#ffffff",
+                    "surface-tint": "#49607e",
+                    "surface-container-low": "#f2f4f6",
+                    "secondary-fixed": "#dbe1ff",
+                    "on-tertiary-container": "#009e6d",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed-variant": "#314865",
+                    "on-surface": "#191c1e",
+                    "surface-variant": "#e0e3e5",
+                    "on-primary-fixed": "#001c37",
+                    "inverse-surface": "#2d3133",
+                    "on-tertiary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "on-surface-variant": "#43474d",
+                    "surface-dim": "#d8dadc",
+                    "secondary-container": "#316bf3",
+                    "background": "#f7f9fb",
+                    "surface-bright": "#f7f9fb",
+                    "primary-fixed-dim": "#b0c8eb",
+                    "tertiary-container": "#002a1a",
+                    "on-tertiary-fixed": "#002113",
+                    "primary-fixed": "#d2e4ff",
+                    "inverse-on-surface": "#eff1f3",
+                    "error-container": "#ffdad6",
+                    "on-secondary-fixed-variant": "#003ea8",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-fixed-variant": "#005236"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"],
+                    "mono": ["JetBrains Mono"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        vertical-align: middle;
+      }
+      .bg-pattern {
+        background-color: #f7f9fb;
+        background-image: radial-gradient(#0051d5 0.5px, transparent 0.5px);
+        background-size: 32px 32px;
+        opacity: 0.15;
+      }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface antialiased overflow-hidden">
+<!-- Background Layering -->
+<div class="fixed inset-0 z-0">
+<div class="absolute inset-0 bg-pattern"></div>
+<div class="absolute inset-0 bg-gradient-to-tr from-primary/10 via-transparent to-secondary/5"></div>
+<div class="absolute top-[-10%] right-[-5%] w-[40vw] h-[40vw] bg-secondary/5 rounded-full blur-[120px]"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[30vw] h-[30vw] bg-primary/10 rounded-full blur-[100px]"></div>
+</div>
+<main class="relative z-10 min-h-screen flex flex-col items-center justify-center p-6 md:p-12">
+<div class="w-full max-w-[1100px] grid grid-cols-1 md:grid-cols-12 gap-0 overflow-hidden bg-surface-container-lowest/80 backdrop-blur-2xl rounded-xl shadow-2xl border border-outline-variant/10">
+<!-- Left Branding Panel (Editorial / Asymmetric) -->
+<div class="md:col-span-5 bg-primary p-10 md:p-16 flex flex-col justify-between text-white relative">
+<!-- Branding Header -->
+<div class="space-y-8">
+<div class="flex items-center gap-3">
+<div class="w-12 h-12 bg-secondary rounded-xl flex items-center justify-center shadow-lg shadow-secondary/20">
+<span class="material-symbols-outlined text-white text-3xl" data-icon="clinical_notes">clinical_notes</span>
+</div>
+<h1 class="text-2xl font-black tracking-tighter text-white">MediAgent</h1>
+</div>
+<div class="pt-12">
+<h2 class="text-4xl md:text-5xl font-extrabold tracking-tight leading-none mb-6">
+                            Precision <br/>
+<span class="text-secondary">Sentinel</span> AI
+                        </h2>
+<p class="text-on-primary-container text-lg font-light leading-relaxed max-w-xs">
+                            Secure clinical intelligence designed for practitioners who demand absolute accuracy.
+                        </p>
+</div>
+</div>
+<!-- Status Metadata (Mono Style) -->
+<div class="space-y-4">
+<div class="inline-flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/10">
+<span class="w-2 h-2 bg-tertiary-fixed-dim rounded-full"></span>
+<span class="font-mono text-[10px] tracking-widest text-slate-400 uppercase">System Status: Optimal</span>
+</div>
+<div class="flex flex-col gap-1 font-mono text-[10px] text-slate-500">
+<p>ID: NODE_SENTINEL_771</p>
+<p>ENC: AES-256-GCM-HKDF</p>
+</div>
+</div>
+<!-- Abstract Visual -->
+<div class="absolute bottom-[-10%] right-[-10%] opacity-20 pointer-events-none">
+<span class="material-symbols-outlined text-[240px] text-secondary" style="font-variation-settings: 'wght' 100;">neurology</span>
+</div>
+</div>
+<!-- Right Login Form Panel -->
+<div class="md:col-span-7 p-10 md:p-20 bg-surface-container-lowest">
+<div class="max-w-md mx-auto h-full flex flex-col justify-center">
+<div class="mb-12">
+<h3 class="text-3xl font-bold tracking-tight text-primary mb-2">Clinical Workspace</h3>
+<p class="text-on-surface-variant font-medium">Authentication required for protected health information access.</p>
+</div>
+<form class="space-y-6">
+<div class="space-y-2">
+<label class="font-mono text-[11px] uppercase tracking-widest text-outline font-semibold">Employee ID / Clinical Email</label>
+<div class="relative group">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline group-focus-within:text-secondary transition-colors" data-icon="badge">badge</span>
+<input class="w-full pl-12 pr-4 py-4 bg-surface-container-highest rounded-xl border-none focus:ring-0 focus:bg-surface-container-lowest transition-all duration-300 placeholder:text-outline-variant font-mono text-sm" placeholder="EMP-4429-X" type="text"/>
+<div class="absolute bottom-0 left-0 h-[2px] w-0 bg-secondary transition-all duration-500 group-focus-within:w-full"></div>
+</div>
+</div>
+<div class="space-y-2">
+<div class="flex justify-between items-center">
+<label class="font-mono text-[11px] uppercase tracking-widest text-outline font-semibold">Security Credential</label>
+<a class="font-mono text-[10px] uppercase tracking-widest text-secondary font-bold hover:underline" href="#">Forgot Access?</a>
+</div>
+<div class="relative group">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline group-focus-within:text-secondary transition-colors" data-icon="lock_open">lock_open</span>
+<input class="w-full pl-12 pr-4 py-4 bg-surface-container-highest rounded-xl border-none focus:ring-0 focus:bg-surface-container-lowest transition-all duration-300 placeholder:text-outline-variant" placeholder="••••••••••••" type="password"/>
+<div class="absolute bottom-0 left-0 h-[2px] w-0 bg-secondary transition-all duration-500 group-focus-within:w-full"></div>
+</div>
+</div>
+<div class="flex items-center gap-2 pt-2">
+<input class="w-4 h-4 rounded-sm border-outline-variant text-secondary focus:ring-secondary/20" id="remember" type="checkbox"/>
+<label class="text-sm text-on-surface-variant font-medium" for="remember">Extend session (24h Clinical Shift)</label>
+</div>
+<button class="w-full group relative overflow-hidden bg-secondary text-white font-bold py-5 px-6 rounded-full shadow-xl shadow-secondary/30 transition-all hover:translate-y-[-2px] active:translate-y-0 active:shadow-none" type="submit">
+<span class="relative z-10 flex items-center justify-center gap-2 tracking-tight text-lg">
+                                Access Clinical Workspace
+                                <span class="material-symbols-outlined text-xl transition-transform group-hover:translate-x-1" data-icon="arrow_forward">arrow_forward</span>
+</span>
+<div class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+</button>
+</form>
+<!-- Trust Footer -->
+<div class="mt-16 pt-8 border-t border-outline-variant/10">
+<div class="flex flex-wrap items-center gap-6">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-lg" data-icon="verified_user" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<span class="font-mono text-[10px] uppercase tracking-wider text-outline">End-to-End Encrypted</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-error-container text-lg" data-icon="policy" style="font-variation-settings: 'FILL' 1;">policy</span>
+<span class="font-mono text-[10px] uppercase tracking-wider text-outline">For Clinical Use Only</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Footer Help -->
+<footer class="mt-12 text-center">
+<p class="text-sm text-outline font-medium">
+                Need technical support? 
+                <a class="text-secondary hover:underline ml-1" href="#">Contact Hospital IT</a>
+<span class="mx-2 opacity-30">|</span>
+<span class="font-mono text-[11px] opacity-60">Build V3.2.0-Alpha</span>
+</p>
+</footer>
+</main>
+<!-- Visual Polish Overlay -->
+<div class="fixed top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-secondary to-tertiary-fixed-dim z-50"></div>
+</body></html>

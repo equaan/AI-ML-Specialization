@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PrecisionSentinel AI | Knowledge Context &amp; Evidence Viewer</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#e0e3e5",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed": "#001c37",
+                    "outline-variant": "#c4c6ce",
+                    "surface-tint": "#49607e",
+                    "surface": "#f7f9fb",
+                    "tertiary-container": "#002a1a",
+                    "surface-dim": "#d8dadc",
+                    "on-secondary-container": "#fefcff",
+                    "on-surface": "#191c1e",
+                    "error-container": "#ffdad6",
+                    "surface-container-high": "#e6e8ea",
+                    "on-primary-fixed-variant": "#314865",
+                    "error": "#ba1a1a",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-tertiary-container": "#009e6d",
+                    "on-error-container": "#93000a",
+                    "secondary": "#0051d5",
+                    "inverse-primary": "#b0c8eb",
+                    "surface-container": "#eceef0",
+                    "on-secondary-fixed-variant": "#003ea8",
+                    "on-secondary": "#ffffff",
+                    "background": "#f7f9fb",
+                    "on-secondary-fixed": "#00174b",
+                    "surface-bright": "#f7f9fb",
+                    "secondary-fixed": "#dbe1ff",
+                    "on-surface-variant": "#43474d",
+                    "on-primary-container": "#768dad",
+                    "on-background": "#191c1e",
+                    "outline": "#74777e",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "surface-container-low": "#f2f4f6",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "on-error": "#ffffff",
+                    "primary-container": "#0a2540",
+                    "tertiary-fixed": "#6ffbbe",
+                    "primary": "#000f22",
+                    "primary-fixed": "#d2e4ff",
+                    "secondary-container": "#316bf3",
+                    "on-tertiary-fixed": "#002113",
+                    "tertiary": "#001209",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-highest": "#e0e3e5",
+                    "primary-fixed-dim": "#b0c8eb",
+                    "on-primary": "#ffffff",
+                    "inverse-surface": "#2d3133"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"],
+                    "mono": ["JetBrains Mono"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .mono-text { font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #0a254033; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body overflow-hidden">
+<!-- Top Navigation Anchor -->
+<nav class="flex justify-between items-center px-6 py-3 w-full bg-[#000f22] dark:bg-[#000f22] sticky top-0 z-50">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tighter text-white font-headline">PrecisionSentinel AI</span>
+<div class="hidden md:flex gap-6 items-center">
+<a class="text-slate-400 font-medium hover:text-white transition-colors text-sm" href="#">Evidence Feed</a>
+<a class="text-white border-b-2 border-[#0051d5] pb-1 font-medium transition-colors text-sm" href="#">Clinical Insights</a>
+<a class="text-slate-400 font-medium hover:text-white transition-colors text-sm" href="#">Library</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center bg-white/5 rounded-full px-3 py-1.5 border border-white/10">
+<span class="material-symbols-outlined text-slate-400 text-lg mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-white text-xs w-48" placeholder="Search knowledge base..." type="text"/>
+</div>
+<span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-white">science</span>
+<span class="material-symbols-outlined text-slate-400 cursor-pointer hover:text-white">account_circle</span>
+</div>
+</nav>
+<!-- Main Modal Overlay Container -->
+<div class="flex h-[calc(100vh-56px)] overflow-hidden">
+<!-- SIDE PANEL: Retrieved Fragments -->
+<aside class="w-96 bg-[#000f22] border-r border-white/5 flex flex-col">
+<div class="p-6">
+<h2 class="font-mono text-[10px] uppercase tracking-widest text-[#0051d5] mb-1">RAG Context Engine</h2>
+<h3 class="text-white text-lg font-bold tracking-tight">Retrieved Fragments</h3>
+<p class="text-slate-500 text-xs mt-1">Found 12 relevant segments from PubMed/MedQA</p>
+</div>
+<div class="flex-1 overflow-y-auto px-4 space-y-3 pb-8">
+<!-- Fragment Item 1 (Active) -->
+<div class="bg-[#0051d5] text-white p-4 rounded-xl cursor-pointer group transition-all duration-200">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-white/20 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">PubMed</span>
+<span class="mono-text text-[11px] font-bold">SIM 0.942</span>
+</div>
+<p class="text-sm leading-relaxed line-clamp-3 font-medium">Radiographic evidence of ground-glass opacities in bilateral lower lobes suggests typical viral pneumonia morphology...</p>
+<div class="mt-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-xs">history</span>
+<span class="text-[10px] opacity-70">Extracted 2m ago</span>
+</div>
+</div>
+<!-- Fragment Item 2 -->
+<div class="bg-white/5 hover:bg-white/10 text-slate-300 p-4 rounded-xl cursor-pointer transition-all duration-200">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-white/5 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">MedQA</span>
+<span class="mono-text text-[11px] font-bold text-[#0051d5]">SIM 0.887</span>
+</div>
+<p class="text-sm leading-relaxed line-clamp-3 text-slate-400">Clinical presentation of sub-acute respiratory distress in elderly populations often correlates with atypical...</p>
+</div>
+<!-- Fragment Item 3 -->
+<div class="bg-white/5 hover:bg-white/10 text-slate-300 p-4 rounded-xl cursor-pointer transition-all duration-200">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-white/5 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">PubMed</span>
+<span class="mono-text text-[11px] font-bold text-[#0051d5]">SIM 0.814</span>
+</div>
+<p class="text-sm leading-relaxed line-clamp-3 text-slate-400">Differential diagnosis involving bacterial pathogens must be excluded through sputum culture and PCT testing...</p>
+</div>
+<!-- Fragment Item 4 -->
+<div class="bg-white/5 hover:bg-white/10 text-slate-300 p-4 rounded-xl cursor-pointer transition-all duration-200">
+<div class="flex justify-between items-start mb-2">
+<span class="bg-white/5 text-[10px] px-2 py-0.5 rounded font-bold uppercase tracking-wider">Internal</span>
+<span class="mono-text text-[11px] font-bold text-[#0051d5]">SIM 0.792</span>
+</div>
+<p class="text-sm leading-relaxed line-clamp-3 text-slate-400">Patient history indicates recurring asthma-like symptoms previously treated with inhaled corticosteroids without...</p>
+</div>
+</div>
+</aside>
+<!-- MAIN CONTENT: Evidence Viewer -->
+<main class="flex-1 bg-surface flex flex-col relative overflow-y-auto">
+<!-- Metadata Header -->
+<header class="p-8 bg-white/50 backdrop-blur-md sticky top-0 z-10 border-b border-surface-container-high">
+<div class="flex justify-between items-start gap-12">
+<div class="space-y-4">
+<div class="flex gap-2">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Primary Evidence</span>
+<span class="bg-surface-container-highest text-on-surface-variant px-3 py-1 rounded-full text-[10px] font-medium uppercase tracking-wider">ID: 8829-PX</span>
+</div>
+<h1 class="text-3xl font-bold tracking-tight text-primary leading-tight">Comparative Analysis of Radiographic Biomarkers in Viral vs. Bacterial Pneumonia: A Meta-Analysis</h1>
+<div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-on-surface-variant text-sm">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-lg">person</span>
+<span class="font-medium">Dr. Elena Rodriguez, et al.</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-lg">calendar_today</span>
+<span>Published: Oct 2023</span>
+</div>
+<div class="flex items-center gap-1 text-secondary font-bold">
+<span class="material-symbols-outlined text-lg">link</span>
+<span class="mono-text">PMID: 3749201</span>
+</div>
+</div>
+</div>
+<!-- Action Buttons Cluster -->
+<div class="flex flex-col gap-2 shrink-0">
+<button class="bg-secondary text-white px-6 py-2.5 rounded-full text-sm font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-secondary/20">
+<span class="material-symbols-outlined text-lg">picture_as_pdf</span>
+                            Open original PDF
+                        </button>
+<div class="flex gap-2">
+<button class="flex-1 bg-surface-container-low text-primary px-4 py-2 rounded-full text-xs font-bold flex items-center justify-center gap-2 hover:bg-surface-container-high transition-all">
+<span class="material-symbols-outlined text-base">content_copy</span>
+                                Copy Citation
+                            </button>
+<button class="bg-surface-container-low text-error px-4 py-2 rounded-full text-xs font-bold flex items-center justify-center gap-2 hover:bg-error-container transition-all">
+<span class="material-symbols-outlined text-base">flag</span>
+</button>
+</div>
+</div>
+</div>
+</header>
+<!-- Content Body -->
+<div class="p-8 max-w-4xl space-y-12 pb-32">
+<!-- Abstract Section -->
+<section class="space-y-4">
+<h4 class="font-mono text-xs uppercase tracking-widest text-on-surface-variant">Selected Segment Abstract</h4>
+<div class="text-lg leading-relaxed text-on-surface font-light">
+                        The current study demonstrates that <span class="bg-secondary/10 border-b-2 border-secondary font-medium">ground-glass opacities (GGOs)</span> with a peripheral distribution are highly indicative of viral etiology, particularly in the lower lobes. Our deep learning model analyzed 12,000 CT scans, revealing that a GGO-to-infiltrate ratio of &gt;1.4 correlates with viral pneumonia with a 92% sensitivity (CI: 89-94%). Conversely, lobar consolidation remains the hallmark for bacterial infection. 
+                    </div>
+<div class="text-lg leading-relaxed text-on-surface font-light">
+                        Furthermore, the presence of subpleural sparing was observed in only 12% of viral cases, suggesting that focal pleuritis may be a secondary indicator for bacterial co-infection. These findings are critical for rapid triage in emergency settings where PCR testing turnaround exceeds 4 hours.
+                    </div>
+</section>
+<!-- Context Mapping: Bento Grid Style -->
+<section class="space-y-6">
+<h4 class="font-mono text-xs uppercase tracking-widest text-[#0051d5]">Context Mapping &amp; AI Inference</h4>
+<div class="grid grid-cols-12 gap-4">
+<!-- Supporting Card -->
+<div class="col-span-7 bg-white p-6 rounded-2xl border border-surface-container-high hover:border-secondary/20 transition-all">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed">
+<span class="material-symbols-outlined">check_circle</span>
+</div>
+<div>
+<h5 class="font-bold text-primary">Diagnosis Alignment</h5>
+<p class="text-xs text-on-surface-variant">Inference Confidence: High</p>
+</div>
+</div>
+<p class="text-sm text-on-surface-variant leading-relaxed">
+                                This fragment <strong class="text-primary font-bold">supports the current Pneumonia diagnosis</strong>. The patient's CT findings (Peripheral GGOs in lower lobes) match the morphological patterns described in this meta-analysis for viral etiology.
+                            </p>
+</div>
+<!-- Data Point Card -->
+<div class="col-span-5 bg-primary p-6 rounded-2xl text-white">
+<h5 class="mono-text text-[10px] uppercase tracking-widest opacity-60 mb-2">Clinical Correlation</h5>
+<div class="text-2xl font-bold tracking-tighter mb-4">92.4% Match</div>
+<p class="text-xs text-slate-400 leading-relaxed">
+                                Similarity to patient's clinical phenotype based on radiographic markers and symptomatic presentation.
+                            </p>
+</div>
+<!-- Technical Spec Card -->
+<div class="col-span-12 bg-surface-container-low p-6 rounded-2xl flex items-center justify-between">
+<div class="flex gap-8">
+<div>
+<div class="text-[10px] text-on-surface-variant uppercase font-mono tracking-widest mb-1">Embedding Model</div>
+<div class="text-sm font-bold text-primary">BioBERT-v4.2</div>
+</div>
+<div>
+<div class="text-[10px] text-on-surface-variant uppercase font-mono tracking-widest mb-1">Source Rank</div>
+<div class="text-sm font-bold text-primary">Rank #1 of 1,240</div>
+</div>
+<div>
+<div class="text-[10px] text-on-surface-variant uppercase font-mono tracking-widest mb-1">Trust Score</div>
+<div class="text-sm font-bold text-[#009e6d]">98% Verified</div>
+</div>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant">verified_user</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Context Footer -->
+<footer class="absolute bottom-0 left-0 w-full bg-white/80 backdrop-blur-md px-8 py-4 flex justify-between items-center border-t border-surface-container-high">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-sm" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<span class="text-xs font-medium text-on-surface-variant">AI has highlighted segments most relevant to Patient ID: <span class="mono-text text-primary font-bold">#PA-2024-0012</span></span>
+</div>
+<div class="flex gap-4">
+<button class="text-secondary font-bold text-xs uppercase tracking-wider hover:underline">View Inference Chain</button>
+<button class="text-on-surface-variant font-bold text-xs uppercase tracking-wider hover:text-primary">Download Summary</button>
+</div>
+</footer>
+</main>
+</div>
+<!-- Background Decoration for Precision Aesthetic -->
+<div class="fixed inset-0 pointer-events-none z-[-1] opacity-20">
+<div class="absolute top-[-10%] right-[-5%] w-[40%] h-[40%] bg-secondary/10 blur-[120px] rounded-full"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[30%] h-[30%] bg-primary/10 blur-[100px] rounded-full"></div>
+</div>
+</body></html>

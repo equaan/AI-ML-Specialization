@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Patient Records Archive | MediAgent</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary": "#0051d5",
+                    "surface-container": "#eceef0",
+                    "primary": "#000f22",
+                    "on-background": "#191c1e",
+                    "surface": "#f7f9fb",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "tertiary": "#001209",
+                    "on-primary-container": "#768dad",
+                    "inverse-primary": "#b0c8eb",
+                    "on-secondary-container": "#fefcff",
+                    "tertiary-fixed": "#6ffbbe",
+                    "outline-variant": "#c4c6ce",
+                    "error": "#ba1a1a",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "outline": "#74777e",
+                    "surface-container-high": "#e6e8ea",
+                    "primary-container": "#0a2540",
+                    "on-error-container": "#93000a",
+                    "surface-container-highest": "#e0e3e5",
+                    "on-secondary-fixed": "#00174b",
+                    "on-primary": "#ffffff",
+                    "surface-tint": "#49607e",
+                    "surface-container-low": "#f2f4f6",
+                    "secondary-fixed": "#dbe1ff",
+                    "on-tertiary-container": "#009e6d",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed-variant": "#314865",
+                    "on-surface": "#191c1e",
+                    "surface-variant": "#e0e3e5",
+                    "on-primary-fixed": "#001c37",
+                    "inverse-surface": "#2d3133",
+                    "on-tertiary": "#ffffff",
+                    "on-error": "#ffffff",
+                    "on-surface-variant": "#43474d",
+                    "surface-dim": "#d8dadc",
+                    "secondary-container": "#316bf3",
+                    "background": "#f7f9fb",
+                    "surface-bright": "#f7f9fb",
+                    "primary-fixed-dim": "#b0c8eb",
+                    "tertiary-container": "#002a1a",
+                    "on-tertiary-fixed": "#002113",
+                    "primary-fixed": "#d2e4ff",
+                    "inverse-on-surface": "#eff1f3",
+                    "error-container": "#ffdad6",
+                    "on-secondary-fixed-variant": "#003ea8",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-fixed-variant": "#005236"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"],
+                    "mono": ["JetBrains Mono"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        body { font-family: 'Inter', sans-serif; }
+        .mono-text { font-family: 'JetBrains Mono', monospace; }
+        .glass-overlay {
+            background: rgba(247, 249, 251, 0.7);
+            backdrop-filter: blur(24px);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex overflow-hidden">
+<!-- SideNavBar Component -->
+<aside class="bg-[#000f22] dark:bg-[#000f22] flex flex-col h-screen py-8 px-4 docked left-0 w-64 shrink-0 z-20">
+<div class="mb-10 px-4">
+<h1 class="text-lg font-black text-white">Clinical Sentinel</h1>
+<p class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.2em] text-slate-500 mt-1">V3.2.0-Alpha</p>
+</div>
+<nav class="flex-1 space-y-2">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 font-medium font-['JetBrains_Mono'] text-xs uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span>New Analysis</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#0051d5] font-bold border-r-4 border-[#0051d5] bg-white/5 font-['JetBrains_Mono'] text-xs uppercase tracking-widest transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="folder_shared">folder_shared</span>
+<span>Patient Records</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 font-medium font-['JetBrains_Mono'] text-xs uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+<span>System Status</span>
+</a>
+</nav>
+<div class="mt-auto pt-6 border-t border-white/5 space-y-2">
+<button class="w-full bg-secondary text-on-secondary rounded-full py-3 px-4 mb-6 font-semibold text-sm flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="add">add</span>
+                Start New Case
+            </button>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-500 font-medium font-['JetBrains_Mono'] text-xs uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Settings</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 text-slate-500 font-medium font-['JetBrains_Mono'] text-xs uppercase tracking-widest hover:bg-white/10 hover:text-white transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+<span>Support</span>
+</a>
+</div>
+</aside>
+<div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+<!-- TopNavBar Component -->
+<header class="bg-[#000f22] dark:bg-[#000f22] flex justify-between items-center w-full px-8 h-16 shrink-0 z-10">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tighter text-white">MediAgent</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-white border-b-2 border-[#0051d5] pb-1 font-['Inter'] font-semibold tracking-tight text-sm" href="#">Records</a>
+<a class="text-slate-400 hover:text-white transition-colors duration-200 font-['Inter'] font-semibold tracking-tight text-sm" href="#">Dashboard</a>
+<a class="text-slate-400 hover:text-white transition-colors duration-200 font-['Inter'] font-semibold tracking-tight text-sm" href="#">Network</a>
+</nav>
+</div>
+<div class="flex items-center gap-6">
+<div class="relative hidden lg:block">
+<input class="bg-white/5 border-none text-white text-xs py-2 pl-4 pr-10 rounded-full w-48 focus:ring-1 focus:ring-secondary transition-all" placeholder="Quick find..." type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm" data-icon="search">search</span>
+</div>
+<div class="flex gap-4 text-slate-400">
+<button class="hover:text-white transition-colors"><span class="material-symbols-outlined" data-icon="notifications">notifications</span></button>
+<button class="hover:text-white transition-colors"><span class="material-symbols-outlined" data-icon="account_circle">account_circle</span></button>
+</div>
+</div>
+</header>
+<!-- Content Canvas -->
+<main class="flex-1 overflow-y-auto p-8 lg:p-12 space-y-12">
+<!-- Page Header & Filters -->
+<section class="flex flex-col md:flex-row md:items-end justify-between gap-8">
+<div class="space-y-2">
+<h2 class="text-4xl font-extrabold tracking-tight text-primary">Patient Records Archive</h2>
+<p class="text-on-surface-variant font-medium">Repository of verified AI clinical assessments and diagnostics.</p>
+</div>
+<div class="flex flex-wrap gap-3">
+<button class="px-5 py-2 rounded-full bg-primary text-white text-sm font-semibold">All Records</button>
+<button class="px-5 py-2 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-semibold hover:bg-surface-container-highest transition-colors">Completed</button>
+<button class="px-5 py-2 rounded-full bg-surface-container-high text-on-surface-variant text-sm font-semibold hover:bg-surface-container-highest transition-colors">Flagged</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container-high hover:bg-secondary hover:text-white transition-all"><span class="material-symbols-outlined text-lg" data-icon="filter_list">filter_list</span></button>
+</div>
+</section>
+<!-- Search & Control Bar -->
+<section class="bg-surface-container-low p-1 rounded-full flex items-center max-w-2xl">
+<div class="flex-1 relative pl-6">
+<span class="material-symbols-outlined absolute left-6 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="w-full bg-transparent border-none py-4 pl-8 focus:ring-0 text-sm font-medium" placeholder="Search by Patient ID, Physician, or Clinical Code..." type="text"/>
+</div>
+<button class="bg-secondary text-white px-8 py-3 rounded-full text-sm font-bold shadow-lg shadow-secondary/20 mr-1">
+                    EXECUTE SEARCH
+                </button>
+</section>
+<!-- Table Section (Asymmetric Layout Approach) -->
+<section class="grid grid-cols-1 gap-1">
+<!-- Header row -->
+<div class="grid grid-cols-12 gap-4 px-8 py-4 bg-transparent font-['JetBrains_Mono'] text-[10px] uppercase tracking-widest text-outline">
+<div class="col-span-2">Patient ID</div>
+<div class="col-span-2">Analysis Type</div>
+<div class="col-span-2">Verification Date</div>
+<div class="col-span-4">Diagnostic Summary</div>
+<div class="col-span-2 text-right">Confidence Status</div>
+</div>
+<!-- Record Rows -->
+<div class="space-y-4">
+<!-- Row 1 -->
+<div class="grid grid-cols-12 gap-4 items-center px-8 py-6 bg-surface-container-lowest rounded-xl hover:bg-white hover:scale-[1.005] transition-all duration-300 cursor-pointer group">
+<div class="col-span-2 mono-text text-sm font-bold text-primary">#PX-9042-ALPHA</div>
+<div class="col-span-2">
+<span class="px-3 py-1 rounded-full bg-secondary/10 text-secondary text-[10px] font-bold uppercase tracking-wider">Vision Engine</span>
+</div>
+<div class="col-span-2 mono-text text-xs text-on-surface-variant">2023.10.12 / 14:22</div>
+<div class="col-span-4 pr-8">
+<p class="text-sm font-medium line-clamp-1">Possible early-stage malignant progression in thoracic scan. High resolution verification pending.</p>
+</div>
+<div class="col-span-2 flex items-center justify-end gap-3">
+<span class="px-3 py-1 rounded-full bg-error-container text-on-error-container text-[10px] font-bold uppercase tracking-wider">Red Flag</span>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span></button>
+</div>
+</div>
+<!-- Row 2 -->
+<div class="grid grid-cols-12 gap-4 items-center px-8 py-6 bg-surface-container-lowest rounded-xl hover:bg-white hover:scale-[1.005] transition-all duration-300 cursor-pointer group">
+<div class="col-span-2 mono-text text-sm font-bold text-primary">#PX-8821-BETA</div>
+<div class="col-span-2">
+<span class="px-3 py-1 rounded-full bg-on-primary-container/10 text-on-primary-container text-[10px] font-bold uppercase tracking-wider">RAG / Clinical</span>
+</div>
+<div class="col-span-2 mono-text text-xs text-on-surface-variant">2023.10.12 / 11:05</div>
+<div class="col-span-4 pr-8">
+<p class="text-sm font-medium line-clamp-1">Comprehensive cross-referencing of laboratory vitals against historical baseline suggests stability.</p>
+</div>
+<div class="col-span-2 flex items-center justify-end gap-3">
+<span class="px-3 py-1 rounded-full bg-[#e8f5e9] text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider">High Confidence</span>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span></button>
+</div>
+</div>
+<!-- Row 3 -->
+<div class="grid grid-cols-12 gap-4 items-center px-8 py-6 bg-surface-container-lowest rounded-xl hover:bg-white hover:scale-[1.005] transition-all duration-300 cursor-pointer group">
+<div class="col-span-2 mono-text text-sm font-bold text-primary">#PX-0034-GAMMA</div>
+<div class="col-span-2">
+<span class="px-3 py-1 rounded-full bg-primary/5 text-primary text-[10px] font-bold uppercase tracking-wider">Full Assessment</span>
+</div>
+<div class="col-span-2 mono-text text-xs text-on-surface-variant">2023.10.11 / 18:40</div>
+<div class="col-span-4 pr-8">
+<p class="text-sm font-medium line-clamp-1">Ambiguous shadow in lumbar region; data noise level above 4%. Manual verification advised.</p>
+</div>
+<div class="col-span-2 flex items-center justify-end gap-3">
+<span class="px-3 py-1 rounded-full bg-surface-container-highest text-on-surface-variant text-[10px] font-bold uppercase tracking-wider">Low Confidence</span>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span></button>
+</div>
+</div>
+<!-- Row 4 -->
+<div class="grid grid-cols-12 gap-4 items-center px-8 py-6 bg-surface-container-lowest rounded-xl hover:bg-white hover:scale-[1.005] transition-all duration-300 cursor-pointer group">
+<div class="col-span-2 mono-text text-sm font-bold text-primary">#PX-5112-ZETA</div>
+<div class="col-span-2">
+<span class="px-3 py-1 rounded-full bg-secondary/10 text-secondary text-[10px] font-bold uppercase tracking-wider">Vision Engine</span>
+</div>
+<div class="col-span-2 mono-text text-xs text-on-surface-variant">2023.10.11 / 16:15</div>
+<div class="col-span-4 pr-8">
+<p class="text-sm font-medium line-clamp-1">Fracture identification in radial distal region confirmed. Automatic splint recommendation generated.</p>
+</div>
+<div class="col-span-2 flex items-center justify-end gap-3">
+<span class="px-3 py-1 rounded-full bg-[#e8f5e9] text-on-tertiary-container text-[10px] font-bold uppercase tracking-wider">High Confidence</span>
+<button class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-sm" data-icon="chevron_right">chevron_right</span></button>
+</div>
+</div>
+</div>
+</section>
+<!-- Editorial Stats Section -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-8 pt-12">
+<div class="space-y-4">
+<p class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.2em] text-outline">Archival Volume</p>
+<div class="text-5xl font-black text-primary tracking-tighter">14,208</div>
+<p class="text-sm text-on-surface-variant leading-relaxed">Verified diagnostic records secured in the neural vault. 100% data integrity verified.</p>
+</div>
+<div class="space-y-4 border-l border-outline-variant/30 pl-8">
+<p class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.2em] text-outline">Accuracy Mean</p>
+<div class="text-5xl font-black text-secondary tracking-tighter">99.8<span class="text-2xl font-bold ml-1">%</span></div>
+<p class="text-sm text-on-surface-variant leading-relaxed">System-wide confidence interval across all vision and RAG analysis modules.</p>
+</div>
+<div class="bg-primary text-white p-8 rounded-2xl relative overflow-hidden group">
+<div class="relative z-10 space-y-4">
+<p class="font-['JetBrains_Mono'] text-[10px] uppercase tracking-[0.2em] text-white/50">Need Assistance?</p>
+<h4 class="text-xl font-bold leading-tight">Request specialized human-in-the-loop audit for flagged cases.</h4>
+<button class="text-xs uppercase font-black tracking-widest text-secondary hover:text-white transition-colors">Contact Radiologist →</button>
+</div>
+<!-- Decorative Background Element -->
+<div class="absolute -right-4 -bottom-4 w-32 h-32 bg-secondary/20 rounded-full blur-3xl group-hover:scale-150 transition-transform duration-700"></div>
+</div>
+</section>
+</main>
+</div>
+<!-- Floating Global Action (Conditional Suppression applied: suppressed here as it's an archive page) -->
+</body></html>

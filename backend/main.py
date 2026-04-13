@@ -157,7 +157,8 @@ async def analyze_patient(
         voice_path = await _save_upload(voice, temp_root) if voice else None
 
         voice_transcript = voice_processor.transcribe(voice_path) if voice_path else None
-        pdf_summary = _summarize_pdf(pdf_path) if pdf_path else ""
+        parsed_lab_report = _parse_pdf_report(pdf_path) if pdf_path else None
+        pdf_summary = _summarize_lab_report(parsed_lab_report) if parsed_lab_report else ""
 
         combined_symptoms = "\n".join(
             part for part in [symptoms.strip(), voice_transcript or "", pdf_summary] if part
@@ -178,7 +179,11 @@ async def analyze_patient(
         raise HTTPException(status_code=500, detail="Analysis completed without a final report.")
 
     report_store.save(session_id, final_report)
-    return {"session_id": session_id, "report": final_report}
+    return {
+        "session_id": session_id,
+        "report": final_report,
+        "lab_report": parsed_lab_report.model_dump() if parsed_lab_report else None,
+    }
 
 
 @app.get(f"{settings.api_prefix}/export/{{session_id}}", tags=["analysis"])
@@ -207,17 +212,20 @@ async def _save_upload(upload: UploadFile, temp_root: Path) -> Path:
     return destination
 
 
-def _summarize_pdf(pdf_path: Path | None) -> str:
+def _parse_pdf_report(pdf_path: Path | None):
     if not pdf_path:
-        return ""
+        return None
     try:
-        parsed = pdf_parser.parse_lab_report(pdf_path)
-        return f"Lab report type: {parsed.report_type}. Key tests: " + ", ".join(
-            f"{result.test_name}={result.value}" for result in parsed.test_results[:5]
-        )
+        return pdf_parser.parse_lab_report(pdf_path)
     except Exception as exc:
         logger.warning("PDF parsing failed: %s", exc)
-        return ""
+        return None
+
+
+def _summarize_lab_report(parsed_lab_report) -> str:
+    return f"Lab report type: {parsed_lab_report.report_type}. Key tests: " + ", ".join(
+        f"{result.test_name}={result.value}" for result in parsed_lab_report.test_results[:5]
+    )
 
 
 def _report_to_markdown(report: dict) -> str:

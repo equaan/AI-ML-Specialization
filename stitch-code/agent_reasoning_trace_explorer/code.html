@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Detailed Trace Explorer | MediAgent</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-tint": "#49607e",
+                    "on-surface": "#191c1e",
+                    "on-secondary-fixed-variant": "#003ea8",
+                    "surface-container-high": "#e6e8ea",
+                    "on-tertiary": "#ffffff",
+                    "on-surface-variant": "#43474d",
+                    "inverse-surface": "#2d3133",
+                    "on-secondary-container": "#fefcff",
+                    "primary": "#000f22",
+                    "primary-container": "#0a2540",
+                    "surface": "#f7f9fb",
+                    "on-tertiary-container": "#009e6d",
+                    "surface-container-low": "#f2f4f6",
+                    "on-primary": "#ffffff",
+                    "on-background": "#191c1e",
+                    "on-primary-fixed-variant": "#314865",
+                    "tertiary": "#001209",
+                    "surface-container-lowest": "#ffffff",
+                    "secondary": "#0051d5",
+                    "on-error-container": "#93000a",
+                    "error": "#ba1a1a",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed": "#001c37",
+                    "tertiary-fixed-dim": "#4edea3",
+                    "secondary-container": "#316bf3",
+                    "error-container": "#ffdad6",
+                    "surface-container-highest": "#e0e3e5",
+                    "surface-bright": "#f7f9fb",
+                    "tertiary-fixed": "#6ffbbe",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-secondary-fixed": "#00174b",
+                    "on-primary-container": "#768dad",
+                    "secondary-fixed": "#dbe1ff",
+                    "background": "#f7f9fb",
+                    "surface-variant": "#e0e3e5",
+                    "surface-container": "#eceef0",
+                    "outline": "#74777e",
+                    "on-error": "#ffffff",
+                    "inverse-primary": "#b0c8eb",
+                    "primary-fixed": "#d2e4ff",
+                    "secondary-fixed-dim": "#b4c5ff",
+                    "on-tertiary-fixed-variant": "#005236",
+                    "on-tertiary-fixed": "#002113",
+                    "tertiary-container": "#002a1a",
+                    "surface-dim": "#d8dadc",
+                    "primary-fixed-dim": "#b0c8eb",
+                    "outline-variant": "#c4c6ce"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Inter"],
+                    "body": ["Inter"],
+                    "label": ["Inter"],
+                    "mono": ["JetBrains Mono"]
+            }
+          },
+        }
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .trace-line::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 40px;
+            bottom: -20px;
+            width: 2px;
+            background: linear-gradient(to bottom, #0051d5, #eceef0);
+        }
+        .trace-line-end::before {
+            display: none;
+        }
+        .code-snippet::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        .code-snippet::-webkit-scrollbar-thumb {
+            background: #43474d;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface selection:bg-secondary/30 selection:text-secondary">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-slate-950/70 backdrop-blur-xl flex justify-between items-center h-16 px-6 w-full border-b border-slate-800/50">
+<div class="flex items-center gap-8">
+<h1 class="text-xl font-bold tracking-tighter text-slate-100">MediAgent</h1>
+<div class="hidden md:flex gap-6">
+<a class="text-slate-400 hover:text-slate-200 transition-colors duration-300 ease-in-out font-sans tracking-tight" href="#">Analysis</a>
+<a class="text-slate-400 hover:text-slate-200 transition-colors duration-300 ease-in-out font-sans tracking-tight" href="#">Records</a>
+<a class="text-slate-400 hover:text-slate-200 transition-colors duration-300 ease-in-out font-sans tracking-tight" href="#">Status</a>
+<a class="text-blue-500 font-semibold transition-colors duration-300 ease-in-out font-sans tracking-tight" href="#">Trace</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-slate-400 hover:bg-slate-800/50 transition-colors rounded-full">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="p-2 text-slate-400 hover:bg-slate-800/50 transition-colors rounded-full">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<div class="flex min-h-screen">
+<!-- SideNavBar -->
+<aside class="hidden md:flex flex-col pt-20 h-screen w-64 border-r border-slate-800/50 bg-slate-950">
+<div class="px-6 mb-8">
+<div class="text-blue-500 font-black font-mono text-sm uppercase tracking-widest">Clinical Ops</div>
+<div class="text-slate-500 text-[10px] uppercase tracking-widest mt-1">V2.4 Active</div>
+</div>
+<nav class="flex-1">
+<div class="space-y-1">
+<a class="flex items-center gap-3 text-slate-500 hover:text-slate-300 px-4 py-3 hover:bg-slate-900 transition-all font-mono text-sm uppercase tracking-widest active:translate-x-1" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span>Analysis</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 hover:text-slate-300 px-4 py-3 hover:bg-slate-900 transition-all font-mono text-sm uppercase tracking-widest active:translate-x-1" href="#">
+<span class="material-symbols-outlined">database</span>
+<span>Records</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 hover:text-slate-300 px-4 py-3 hover:bg-slate-900 transition-all font-mono text-sm uppercase tracking-widest active:translate-x-1" href="#">
+<span class="material-symbols-outlined">query_stats</span>
+<span>Status</span>
+</a>
+<a class="flex items-center gap-3 bg-blue-600/10 text-blue-400 border-r-2 border-blue-500 px-4 py-3 hover:bg-slate-900 transition-all font-mono text-sm uppercase tracking-widest active:translate-x-1" href="#">
+<span class="material-symbols-outlined">terminal</span>
+<span>Trace</span>
+</a>
+</div>
+</nav>
+<div class="p-4 space-y-1">
+<a class="flex items-center gap-3 text-slate-500 hover:text-slate-300 px-4 py-3 hover:bg-slate-900 transition-all font-mono text-sm uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined">help</span>
+<span>Help</span>
+</a>
+<a class="flex items-center gap-3 text-slate-500 hover:text-slate-300 px-4 py-3 hover:bg-slate-900 transition-all font-mono text-sm uppercase tracking-widest" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span>Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 pt-24 pb-12 px-8 overflow-y-auto">
+<div class="max-w-6xl mx-auto">
+<!-- Header Stats -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+<div class="bg-surface-container-low p-6 rounded-xl border border-outline-variant/10">
+<div class="text-on-surface-variant text-[10px] uppercase font-bold tracking-widest mb-1">Trace ID</div>
+<div class="font-mono text-secondary text-sm">TX-7700-ALPHA-92</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border border-outline-variant/10">
+<div class="text-on-surface-variant text-[10px] uppercase font-bold tracking-widest mb-1">Total Latency</div>
+<div class="font-mono text-on-surface text-lg">1.42s</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border border-outline-variant/10">
+<div class="text-on-surface-variant text-[10px] uppercase font-bold tracking-widest mb-1">Total Tokens</div>
+<div class="font-mono text-on-surface text-lg">4,281</div>
+</div>
+<div class="bg-surface-container-low p-6 rounded-xl border border-outline-variant/10">
+<div class="text-on-surface-variant text-[10px] uppercase font-bold tracking-widest mb-1">Status</div>
+<div class="flex items-center gap-2 mt-1">
+<span class="w-2 h-2 rounded-full bg-on-tertiary-container animate-pulse"></span>
+<span class="text-on-tertiary-container font-bold text-xs uppercase tracking-tighter">Completed</span>
+</div>
+</div>
+</div>
+<!-- Timeline Explorer -->
+<div class="space-y-0">
+<!-- Entry Node -->
+<div class="relative pl-12 pb-16 trace-line">
+<div class="absolute left-0 top-0 w-10 h-10 rounded-full bg-primary flex items-center justify-center z-10 border-4 border-surface">
+<span class="material-symbols-outlined text-white text-lg">play_arrow</span>
+</div>
+<div class="flex flex-col md:flex-row md:items-start gap-8">
+<div class="w-full md:w-1/3">
+<h3 class="text-display-lg font-extrabold tracking-tighter text-primary">Execution Start</h3>
+<p class="text-on-surface-variant text-sm mt-2 leading-relaxed">Triggered by clinical radiological upload. Payload validated against FHIR schema.</p>
+</div>
+<div class="flex-1 bg-surface-container-highest/30 rounded-xl p-4 overflow-hidden border border-outline-variant/15">
+<div class="flex justify-between items-center mb-3">
+<span class="font-mono text-[10px] text-on-surface-variant uppercase">Input Payload</span>
+<span class="px-2 py-0.5 bg-surface-container text-on-surface-variant text-[9px] font-mono rounded">JSON</span>
+</div>
+<pre class="font-mono text-xs text-on-surface-variant code-snippet overflow-x-auto"><code>{
+  "request_id": "MED-902",
+  "source": "Imaging_Suite_4",
+  "priority": "STAT",
+  "modality": "CT_SCAN"
+}</code></pre>
+</div>
+</div>
+</div>
+<!-- Vision Agent Node -->
+<div class="relative pl-12 pb-16 trace-line">
+<div class="absolute left-0 top-0 w-10 h-10 rounded-full bg-secondary flex items-center justify-center z-10 border-4 border-surface shadow-lg shadow-secondary/20">
+<span class="material-symbols-outlined text-white text-lg">visibility</span>
+</div>
+<div class="flex flex-col md:flex-row md:items-start gap-8">
+<div class="w-full md:w-1/3">
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[10px] font-mono bg-secondary-container text-on-secondary-container px-1.5 py-0.5 rounded">LLaVA-v1.6</span>
+<span class="font-mono text-[10px] text-on-surface-variant">322ms</span>
+</div>
+<h3 class="text-xl font-bold tracking-tight text-primary">Vision Agent</h3>
+<p class="text-on-surface-variant text-sm mt-2 leading-relaxed">Multimodal feature extraction from axial CT slices. Identifies focal opacities in the right lower lobe.</p>
+<div class="mt-4 flex flex-wrap gap-2">
+<span class="px-2 py-1 bg-surface-container-high rounded-full text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Visual_Scan</span>
+<span class="px-2 py-1 bg-surface-container-high rounded-full text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">OCR_Labels</span>
+</div>
+</div>
+<div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4">
+<div class="bg-primary-container rounded-xl p-4 border border-blue-500/10">
+<div class="text-[9px] font-mono text-on-primary-container mb-2 uppercase tracking-widest">Inference Details</div>
+<div class="space-y-2">
+<div class="flex justify-between text-[11px] font-mono">
+<span class="text-on-primary-container">Confidence</span>
+<span class="text-tertiary-fixed-dim">0.982</span>
+</div>
+<div class="flex justify-between text-[11px] font-mono">
+<span class="text-on-primary-container">Tokens</span>
+<span class="text-on-secondary-container">1,024</span>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-highest/30 rounded-xl p-4 border border-outline-variant/15">
+<div class="flex justify-between items-center mb-2">
+<span class="font-mono text-[10px] text-on-surface-variant uppercase">Extracted_Features</span>
+</div>
+<pre class="font-mono text-[10px] text-on-surface-variant code-snippet overflow-x-auto"><code>{
+  "finding": "Nodule",
+  "coord": [112, 45],
+  "diameter": "8.2mm",
+  "density": "Solid"
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<!-- RAG Agent Node -->
+<div class="relative pl-12 pb-16 trace-line">
+<div class="absolute left-0 top-0 w-10 h-10 rounded-full bg-on-tertiary-container flex items-center justify-center z-10 border-4 border-surface shadow-lg shadow-on-tertiary-container/20">
+<span class="material-symbols-outlined text-white text-lg">database</span>
+</div>
+<div class="flex flex-col md:flex-row md:items-start gap-8">
+<div class="w-full md:w-1/3">
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[10px] font-mono bg-tertiary-fixed text-on-tertiary-fixed px-1.5 py-0.5 rounded">PubMed + Chroma</span>
+<span class="font-mono text-[10px] text-on-surface-variant">518ms</span>
+</div>
+<h3 class="text-xl font-bold tracking-tight text-primary">RAG Agent</h3>
+<p class="text-on-surface-variant text-sm mt-2 leading-relaxed">Vector search against 4.2M clinical papers. Retrieving Fleischner Society guidelines for small pulmonary nodules.</p>
+</div>
+<div class="flex-1 bg-tertiary-container text-tertiary-fixed rounded-xl p-5 border border-on-tertiary-container/20 overflow-hidden">
+<div class="flex items-center gap-3 mb-4">
+<div class="p-1.5 bg-on-tertiary-container/10 rounded">
+<span class="material-symbols-outlined text-sm">link</span>
+</div>
+<span class="text-[10px] font-mono uppercase tracking-widest">Retrieved Contexts (2)</span>
+</div>
+<div class="space-y-4">
+<div class="border-l-2 border-tertiary-fixed/30 pl-4 py-1">
+<div class="text-[10px] font-mono text-tertiary-fixed/60 mb-1">PMID: 28240470</div>
+<p class="text-xs italic leading-snug">"Guidelines for Management of Incidental Pulmonary Nodules... recommend follow-up CT at 6-12 months for low-risk patients."</p>
+</div>
+<div class="border-l-2 border-tertiary-fixed/30 pl-4 py-1">
+<div class="text-[10px] font-mono text-tertiary-fixed/60 mb-1">CHROMA_SIMILARITY: 0.892</div>
+<p class="text-xs italic leading-snug">"Case studies of 8mm solid nodules indicate low malignancy probability but necessitate careful observation."</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Report Agent Node -->
+<div class="relative pl-12 pb-16 trace-line">
+<div class="absolute left-0 top-0 w-10 h-10 rounded-full bg-primary-container flex items-center justify-center z-10 border-4 border-surface shadow-lg">
+<span class="material-symbols-outlined text-white text-lg" data-weight="fill">description</span>
+</div>
+<div class="flex flex-col md:flex-row md:items-start gap-8">
+<div class="w-full md:w-1/3">
+<div class="flex items-center gap-2 mb-1">
+<span class="text-[10px] font-mono bg-on-primary-fixed-variant text-on-primary-fixed px-1.5 py-0.5 rounded">LLaMA-3-70B</span>
+<span class="font-mono text-[10px] text-on-surface-variant">580ms</span>
+</div>
+<h3 class="text-xl font-bold tracking-tight text-primary">Report Agent</h3>
+<p class="text-on-surface-variant text-sm mt-2 leading-relaxed">Synthesizing visual findings and clinical literature into a structured medical report draft.</p>
+<div class="mt-4 p-3 bg-secondary/5 border-l-2 border-secondary rounded-r-lg">
+<div class="text-[9px] uppercase font-bold text-secondary mb-1">Final Decision Logic</div>
+<p class="text-[11px] text-on-surface italic">"Nodule observed &gt; Literature recommendation = High confidence follow-up schedule."</p>
+</div>
+</div>
+<div class="flex-1 bg-surface-container-lowest rounded-xl p-1 shadow-sm border border-outline-variant/20">
+<div class="p-4 border-b border-surface-container">
+<span class="font-mono text-[10px] text-on-surface-variant uppercase">Structured_Output.md</span>
+</div>
+<div class="p-4 font-mono text-xs text-on-surface leading-relaxed max-h-48 overflow-y-auto code-snippet">
+<div class="text-secondary"># Clinical Impression</div>
+<div class="mt-2 text-on-surface-variant">1. Solid pulmonary nodule, right lower lobe, measuring 8.2mm.</div>
+<div class="mt-1 text-on-surface-variant">2. No hilar or mediastinal lymphadenopathy.</div>
+<div class="mt-2 text-secondary"># Recommendation</div>
+<div class="mt-1 text-on-surface-variant">Follow-up CT scan in 6-12 months per Fleischner Society criteria for solid nodules in low-risk patients.</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Termination Node -->
+<div class="relative pl-12 pb-0 trace-line trace-line-end">
+<div class="absolute left-0 top-0 w-10 h-10 rounded-full bg-on-tertiary-container flex items-center justify-center z-10 border-4 border-surface">
+<span class="material-symbols-outlined text-white text-lg">check_circle</span>
+</div>
+<div class="flex flex-col md:flex-row md:items-center gap-8">
+<div class="w-full md:w-1/3">
+<h3 class="text-lg font-bold tracking-tight text-primary">Trace Complete</h3>
+<p class="text-on-surface-variant text-xs mt-1">Memory cleared. Artifacts archived.</p>
+</div>
+<div class="flex gap-4">
+<button class="px-5 py-2 bg-secondary text-on-secondary rounded-full text-xs font-bold uppercase tracking-widest hover:bg-secondary-container transition-colors">
+                                    Export Logs
+                                </button>
+<button class="px-5 py-2 bg-surface-container-high text-on-surface-variant rounded-full text-xs font-bold uppercase tracking-widest hover:bg-surface-container-highest transition-colors">
+                                    Replay Step
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Contextual FAB (Only visible on trace detail) -->
+<div class="fixed bottom-8 right-8 flex flex-col gap-3">
+<button class="w-14 h-14 bg-primary text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-transform active:scale-95 group">
+<span class="material-symbols-outlined text-2xl group-hover:rotate-45 transition-transform">bolt</span>
+</button>
+</div>
+</body></html>

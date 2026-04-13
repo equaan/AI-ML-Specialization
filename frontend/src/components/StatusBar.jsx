@@ -15,30 +15,26 @@ export function StatusBar() {
       .catch(() => {
         if (active) setError("Status unavailable");
       });
-
     return () => {
       active = false;
     };
   }, []);
 
-  if (error) {
-    return <div className="status-strip card">{error}</div>;
-  }
-
   return (
-    <div className="status-strip card">
-      <StatusItem label="LLaMA 3.1" active={Boolean(status?.llama3)} />
-      <StatusItem label="LLaVA" active={Boolean(status?.llava)} />
-      <StatusItem label="Whisper" active={Boolean(status?.whisper)} />
-      <StatusItem label="ChromaDB" active={Boolean(status?.chromadb)} />
+    <div className="status-strip">
+      <StatusPill label="LLaMA 3.1" state={status?.llama3 ? "online" : "warning"} />
+      <StatusPill label="LLaVA" state={status?.llava ? "online" : "warning"} />
+      <StatusPill label="Whisper" state={status?.whisper ? "online" : "warning"} />
+      <StatusPill label="ChromaDB" state={status?.chromadb ? "online" : "warning"} />
+      {error ? <span className="status-pill warning">{error}</span> : null}
     </div>
   );
 }
 
-function StatusItem({ label, active }) {
+function StatusPill({ label, state }) {
   return (
-    <div className={`status-item ${active ? "active" : "inactive"}`}>
-      <span className="status-dot" />
+    <div className={`status-pill ${state}`}>
+      <span className="dot" />
       <span>{label}</span>
     </div>
   );

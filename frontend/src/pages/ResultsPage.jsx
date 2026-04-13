@@ -6,7 +6,7 @@ export function ResultsPage() {
   const { currentReport, currentSessionId } = useReportContext();
 
   return (
-    <div className="stack">
+    <div className="stack-page">
       <ResultsPanel report={currentReport} />
       <ExportBar sessionId={currentSessionId} />
     </div>

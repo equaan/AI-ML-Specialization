@@ -160,12 +160,12 @@ Phase 3 Done When: Postman/curl can hit `/api/analyze` with a real image and get
 
 ### Frontend Components
 - [x] `InputPanel` - Image dropzone, PDF upload, symptom text, voice recorder
-- [ ] `VoiceRecorder` - MediaRecorder API, waveform visualization, Whisper transcription display
+- [x] `VoiceRecorder` - MediaRecorder API, waveform visualization, Whisper transcription display
 - [x] `ResultsPanel` - Tabbed: Summary | Diagnoses | Evidence | Next Steps
-- [ ] `DiagnosisCard` - Condition name, ICD badge, confidence radial, expandable evidence
-- [ ] `RedFlagBanner` - High-contrast alert for urgent findings
-- [ ] `SourceChip` - Clickable PubMed citation chips
-- [ ] `TraceViewer` - Collapsible LangSmith trace timeline
+- [x] `DiagnosisCard` - Condition name, ICD badge, confidence radial, expandable evidence
+- [x] `RedFlagBanner` - High-contrast alert for urgent findings
+- [x] `SourceChip` - Clickable PubMed citation chips
+- [x] `TraceViewer` - Collapsible LangSmith trace timeline
 - [x] `StatusBar` - Model loading status indicators
 - [x] `ExportBar` - PDF / MD / JSON export buttons
 
@@ -174,7 +174,7 @@ Phase 3 Done When: Postman/curl can hit `/api/analyze` with a real image and get
 - [x] `analyzePatient(formData)` -> POST `/api/analyze`
 - [x] `transcribeVoice(audioBlob)` -> POST `/api/transcribe`
 - [x] `getModelsStatus()` -> GET `/api/models/status`
-- [ ] Loading states for all async calls
+- [x] Loading states for all async calls
 - [ ] Error boundary with user-friendly messages
 
 Phase 4 Done When: Full demo works - upload image + type symptoms -> see formatted report in browser.
