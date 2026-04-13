@@ -276,7 +276,9 @@ textarea {
 .section-card,
 .preview-card,
 .recent-card,
-.model-card {
+.model-card,
+.loading-card,
+.error-boundary {
   padding: 22px;
 }
 
@@ -867,6 +869,43 @@ textarea:focus {
   color: #74777e;
 }
 
+.loading-card h3,
+.error-boundary h3 {
+  margin: 4px 0 10px;
+}
+
+.loading-skeleton-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.loading-skeleton-lines span {
+  display: block;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #eceef0 25%, #f7f9fb 50%, #eceef0 75%);
+  background-size: 220% 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+.loading-skeleton-lines span:nth-child(1) {
+  width: 92%;
+}
+
+.loading-skeleton-lines span:nth-child(2) {
+  width: 78%;
+}
+
+.loading-skeleton-lines span:nth-child(3) {
+  width: 64%;
+}
+
+.error-boundary {
+  margin: 28px;
+}
+
 .spin {
   animation: spin 1s linear infinite;
 }
@@ -874,6 +913,12 @@ textarea:focus {
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -220% 0;
   }
 }
 

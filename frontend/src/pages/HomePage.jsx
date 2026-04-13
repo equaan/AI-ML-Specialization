@@ -2,12 +2,13 @@ import { FileText, Image as ImageIcon, Mic } from "lucide-react";
 
 import { ExportBar } from "../components/ExportBar";
 import { InputPanel } from "../components/InputPanel";
+import { LoadingCard } from "../components/LoadingCard";
 import { ResultsPanel } from "../components/ResultsPanel";
 import { StatusBar } from "../components/StatusBar";
 import { useReportContext } from "../state/ReportContext";
 
 export function HomePage() {
-  const { currentInputs, currentReport, currentSessionId, history } = useReportContext();
+  const { currentInputs, currentReport, currentSessionId, history, analysisLoading } = useReportContext();
 
   return (
     <div className="home-grid">
@@ -37,7 +38,7 @@ export function HomePage() {
           </div>
         </section>
 
-        <ResultsPanel report={currentReport} compact />
+        {analysisLoading ? <LoadingCard title="Agents are assembling the clinical report..." /> : <ResultsPanel report={currentReport} compact />}
         <ExportBar sessionId={currentSessionId} />
 
         <section className="workspace-card recent-card">

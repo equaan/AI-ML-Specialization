@@ -6,7 +6,7 @@ import { useReportContext } from "../state/ReportContext";
 import { VoiceRecorder } from "./VoiceRecorder";
 
 export function InputPanel() {
-  const { updateAnalysis } = useReportContext();
+  const { updateAnalysis, setAnalysisLoading } = useReportContext();
   const [symptoms, setSymptoms] = useState("");
   const [transcript, setTranscript] = useState("");
   const [imageFile, setImageFile] = useState(null);
@@ -25,6 +25,7 @@ export function InputPanel() {
     if (!canSubmit) return;
 
     setLoading(true);
+    setAnalysisLoading(true);
     setError("");
     try {
       const data = await analyzePatient({
@@ -49,6 +50,7 @@ export function InputPanel() {
       setError(submitError?.response?.data?.detail || "Analysis request failed.");
     } finally {
       setLoading(false);
+      setAnalysisLoading(false);
     }
   }
 

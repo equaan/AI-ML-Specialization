@@ -102,6 +102,17 @@
   - [`frontend/src/pages/LabReportPage.jsx`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/frontend/src/pages/LabReportPage.jsx)
 - Updated [`backend/main.py`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/backend/main.py) so `/api/analyze` also returns parsed `lab_report` data for the new lab/evidence views
 
+### Frontend runtime polish
+- Added [`frontend/src/components/ErrorBoundary.jsx`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/frontend/src/components/ErrorBoundary.jsx) to catch and show user-friendly UI failures
+- Added [`frontend/src/components/LoadingCard.jsx`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/frontend/src/components/LoadingCard.jsx) for visible loading placeholders
+- Updated [`frontend/src/main.jsx`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/frontend/src/main.jsx) to wrap the app in an error boundary
+- Updated [`frontend/src/state/ReportContext.jsx`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/frontend/src/state/ReportContext.jsx) with shared analysis loading state
+- Added stronger async-state handling in:
+  - [`frontend/src/components/InputPanel.jsx`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/frontend/src/components/InputPanel.jsx)
+  - [`frontend/src/components/StatusBar.jsx`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/frontend/src/components/StatusBar.jsx)
+  - [`frontend/src/pages/HomePage.jsx`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/frontend/src/pages/HomePage.jsx)
+  - [`frontend/src/pages/ResultsPage.jsx`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/frontend/src/pages/ResultsPage.jsx)
+
 ## What is ready now
 
 - The repo is no longer only docs; it has a usable Python project skeleton
@@ -116,6 +127,7 @@
 
 ## What I verified locally
 
+- Python source compilation passed with:
 - Python source compilation passed with:
 
 ```powershell
@@ -193,6 +205,34 @@ python scripts/setup_chromadb.py
 pytest
 ```
 
+### 7. Install frontend dependencies and run the UI
+
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Then open:
+
+- `http://localhost:3000`
+
+### 8. Recommended end-to-end check on the stronger PC
+
+1. Start the backend with `uvicorn backend.main:app --reload`
+2. Start the frontend with `npm run dev` inside `frontend`
+3. Open `http://localhost:3000`
+4. Upload:
+   - one image
+   - one PDF lab report
+   - symptom text
+5. Verify:
+   - analysis completes
+   - results page renders
+   - evidence page shows sources
+   - lab page shows parsed lab values
+   - export buttons open PDF/Markdown/JSON
+
 ## Datasets to download into the root directory
 
 Create these folders first:
@@ -239,7 +279,7 @@ Put the downloaded assets here:
    - frontend refinements
    - better report generation with live Ollama
    - richer tests and fixtures
-   - voice recorder UI
+   - deeper backend/runtime validation helpers
 
 ## Notes
 
@@ -247,3 +287,4 @@ Put the downloaded assets here:
 - The model-backed behavior is intentionally written with fallbacks so development can continue before Ollama and datasets are available.
 - The `uvicorn`, `pytest`, dataset-ingestion, and live-model verification steps are still pending until dependencies are installed on a stronger machine.
 - The frontend files are scaffolded, but `npm install` and browser verification are still pending.
+- The `progress.md` file should now be used as the handoff checklist when you switch to the stronger PC.

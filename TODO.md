@@ -175,7 +175,7 @@ Phase 3 Done When: Postman/curl can hit `/api/analyze` with a real image and get
 - [x] `transcribeVoice(audioBlob)` -> POST `/api/transcribe`
 - [x] `getModelsStatus()` -> GET `/api/models/status`
 - [x] Loading states for all async calls
-- [ ] Error boundary with user-friendly messages
+- [x] Error boundary with user-friendly messages
 
 Phase 4 Done When: Full demo works - upload image + type symptoms -> see formatted report in browser.
 

@@ -6,6 +6,7 @@ export function ReportProvider({ children }) {
   const [currentSessionId, setCurrentSessionId] = useState(null);
   const [currentReport, setCurrentReport] = useState(null);
   const [currentLabReport, setCurrentLabReport] = useState(null);
+  const [analysisLoading, setAnalysisLoading] = useState(false);
   const [currentInputs, setCurrentInputs] = useState({
     symptoms: "",
     transcript: "",
@@ -37,11 +38,13 @@ export function ReportProvider({ children }) {
       currentSessionId,
       currentReport,
       currentLabReport,
+      analysisLoading,
+      setAnalysisLoading,
       currentInputs,
       history,
       updateAnalysis,
     }),
-    [currentSessionId, currentReport, currentLabReport, currentInputs, history]
+    [currentSessionId, currentReport, currentLabReport, analysisLoading, currentInputs, history]
   );
 
   return <ReportContext.Provider value={value}>{children}</ReportContext.Provider>;

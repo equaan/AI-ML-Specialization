@@ -1,24 +1,36 @@
 import { useEffect, useState } from "react";
 
 import { getModelsStatus } from "../api/client";
+import { LoadingCard } from "./LoadingCard";
 
 export function StatusBar() {
   const [status, setStatus] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
     getModelsStatus()
       .then((data) => {
-        if (active) setStatus(data);
+        if (active) {
+          setStatus(data);
+          setLoading(false);
+        }
       })
       .catch(() => {
-        if (active) setError("Status unavailable");
+        if (active) {
+          setError("Status unavailable");
+          setLoading(false);
+        }
       });
     return () => {
       active = false;
     };
   }, []);
+
+  if (loading) {
+    return <LoadingCard title="Checking local model status..." />;
+  }
 
   return (
     <div className="status-strip">
