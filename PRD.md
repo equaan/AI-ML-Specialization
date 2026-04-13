@@ -1,0 +1,395 @@
+# PRD.md — MediAgent Product Requirements Document
+
+**Version:** 1.0  
+**Author:** Hussain (VIT Mumbai, CE — AI/ML Specialization)  
+**Last Updated:** 2025  
+**Status:** Ready for Development
+
+---
+
+## 1. Product Overview
+
+### 1.1 Problem Statement
+
+Healthcare in India and globally faces a critical gap: **diagnostic support is inaccessible at the point of first contact.** Rural hospitals are understaffed, general practitioners lack access to specialist knowledge, and patients with complex multi-modal symptoms (lab reports + imaging + history) receive delayed or missed diagnoses.
+
+Existing tools either:
+- Require expensive proprietary software (Epic, IBM Watson Health)
+- Are single-modal (only images OR only text)
+- Are not AI-agent driven — they're static, rule-based decision trees
+
+### 1.2 Solution
+
+**MediAgent** is a fully open-source, multimodal clinical decision support system powered by a 3-agent LangGraph pipeline. It accepts:
+- Medical images (X-rays, skin lesions, retinal scans)
+- Lab report PDFs
+- Patient symptom descriptions (text or voice)
+
+And returns:
+- Ranked differential diagnoses with confidence scores
+- ICD-10 coded conditions
+- Red-flag alerts (urgent referral triggers)
+- Evidence-backed reasoning with source citations
+- Actionable next steps
+
+### 1.3 Target Users
+
+| User | Use Case |
+|---|---|
+| Medical students | Study aid, case-based learning |
+| Junior doctors / interns | Second-opinion support |
+| Patients (health-literate) | Understanding their own reports |
+| Researchers | Benchmarking clinical NLP |
+| Recruiters / evaluators | Assess AI/ML engineering capability |
+
+### 1.4 Non-Goals
+
+- MediAgent is **NOT a replacement for a licensed physician**
+- MediAgent does **NOT store or persist patient data**
+- MediAgent does **NOT provide prescription recommendations**
+- MediAgent is **NOT HIPAA-certified** (educational/research use only)
+
+---
+
+## 2. Core Features
+
+### Feature 1 — Multimodal Input Intake
+**Priority:** P0 (Must Have)
+
+The system must accept three simultaneous input modalities:
+
+| Input Type | Accepted Formats | Processing |
+|---|---|---|
+| Medical Image | JPG, PNG, DICOM (via conversion) | LLaVA vision model |
+| Lab Report | PDF, scanned PDF | PyMuPDF + OCR fallback |
+| Symptoms | Text field OR voice recording | Whisper (voice) |
+
+**Acceptance Criteria:**
+- Image upload with preview before submission
+- PDF text extraction with visible preview of extracted text
+- Voice recording with real-time waveform and transcription display
+- All three inputs optional but at least one required
+
+---
+
+### Feature 2 — Vision Analysis Agent
+**Priority:** P0 (Must Have)
+
+A dedicated LangGraph node that processes medical images using LLaVA 1.6.
+
+**Inputs:** Raw image file  
+**Outputs:**
+```json
+{
+  "image_type": "chest_xray | skin_lesion | retinal_scan | lab_slide | unknown",
+  "findings": ["bilateral infiltrates in lower lobes", "..."],
+  "anomalies": ["opacity in right lower lobe"],
+  "severity_hint": "mild | moderate | severe | normal",
+  "confidence": 0.82
+}
+```
+
+**Acceptance Criteria:**
+- Identifies image type automatically
+- Returns structured JSON (not free text)
+- Gracefully handles non-medical images with a warning
+- Runs locally via Ollama (no external API call)
+
+---
+
+### Feature 3 — RAG Knowledge Retrieval Agent
+**Priority:** P0 (Must Have)
+
+A LangGraph node that retrieves relevant medical knowledge from:
+1. **ChromaDB** (pre-ingested MedQA + medical guidelines)
+2. **PubMed API** (live retrieval via NCBI E-utilities)
+
+**Inputs:** Patient symptoms + Vision Agent findings  
+**Outputs:**
+```json
+{
+  "relevant_conditions": ["Pneumonia", "COVID-19", "Pulmonary Edema"],
+  "supporting_evidence": ["Source excerpt 1", "Source excerpt 2"],
+  "sources": [
+    {"title": "...", "pmid": "...", "url": "..."}
+  ],
+  "retrieval_count": 5
+}
+```
+
+**Acceptance Criteria:**
+- Returns top-5 relevant context chunks per query
+- Cites sources with PMID links
+- Falls back to ChromaDB if PubMed API is unavailable
+- Embedding model: PubMedBERT
+
+---
+
+### Feature 4 — Clinical Report Agent
+**Priority:** P0 (Must Have)
+
+The final synthesis LangGraph node that combines Vision + RAG outputs into a structured clinical summary.
+
+**Output Schema:**
+```json
+{
+  "patient_summary": "35-year-old presenting with...",
+  "differential_diagnosis": [
+    {
+      "rank": 1,
+      "condition": "Community-Acquired Pneumonia",
+      "icd_10_code": "J18.9",
+      "confidence_score": 0.87,
+      "supporting_findings": ["bilateral infiltrates", "elevated WBC"],
+      "against_findings": []
+    }
+  ],
+  "red_flags": [
+    "SpO2 drop mentioned — urgent referral recommended"
+  ],
+  "recommended_next_steps": [
+    "CBC with differential",
+    "Sputum culture",
+    "Pulmonologist referral"
+  ],
+  "estimated_urgency": "high | medium | low",
+  "disclaimer": "This output is generated by an AI system for educational and research purposes only. It must not be used as a substitute for professional medical advice, diagnosis, or treatment."
+}
+```
+
+**Acceptance Criteria:**
+- Differential diagnosis ranked by confidence score descending
+- ICD-10 code present for every condition
+- Red flags highlighted separately
+- Disclaimer always present, non-removable
+- Response time < 30 seconds on CPU
+
+---
+
+### Feature 5 — Voice Input (Whisper Integration)
+**Priority:** P1 (Should Have)
+
+Allow patients/doctors to describe symptoms verbally.
+
+**Acceptance Criteria:**
+- Record via browser microphone
+- Transcription via local Whisper (`base` model)
+- Editable transcription before submission
+- Supports English (primary) and Hindi (stretch goal)
+
+---
+
+### Feature 6 — Agent Trace Viewer (LangSmith)
+**Priority:** P1 (Should Have)
+
+Developer-facing trace panel showing the full LangGraph execution trace.
+
+**Acceptance Criteria:**
+- Each agent node's input/output visible
+- Token usage per node
+- Latency per node
+- Accessible via LangSmith dashboard link embedded in UI
+
+---
+
+### Feature 7 — Report Export
+**Priority:** P2 (Nice to Have)
+
+Export the final clinical report as:
+- PDF (formatted with PyMuPDF)
+- Markdown
+- JSON (raw)
+
+---
+
+### Feature 8 — Evaluation Dashboard
+**Priority:** P2 (Nice to Have)
+
+Internal page showing benchmark results:
+- RAG retrieval accuracy on MedQA test set
+- Vision Agent classification accuracy on HAM10000
+- End-to-end accuracy on MedMCQA
+
+---
+
+## 3. System Architecture
+
+### 3.1 Component Diagram
+
+```
+┌─────────────────────────────────────────────┐
+│               React Frontend                 │
+│  (Input Panel | Results Panel | Trace View) │
+└─────────────────┬───────────────────────────┘
+                  │ HTTP (REST)
+                  ▼
+┌─────────────────────────────────────────────┐
+│              FastAPI Backend                 │
+│  POST /api/analyze                           │
+│  GET  /api/health                            │
+│  GET  /api/models/status                    │
+└─────────────────┬───────────────────────────┘
+                  │
+                  ▼
+┌─────────────────────────────────────────────┐
+│         LangGraph Orchestrator               │
+│                                             │
+│  START → Vision Agent → RAG Agent           │
+│              └──────────► Report Agent → END│
+└─────────────────┬───────────────────────────┘
+                  │
+      ┌───────────┼───────────┐
+      ▼           ▼           ▼
+┌──────────┐ ┌────────┐ ┌──────────┐
+│  Ollama  │ │Chroma  │ │ PubMed   │
+│ (LLaVA + │ │  DB    │ │   API    │
+│  LLaMA3) │ │        │ │  (NCBI)  │
+└──────────┘ └────────┘ └──────────┘
+```
+
+### 3.2 API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/analyze` | Main analysis endpoint — accepts multipart form data |
+| GET | `/api/health` | System health check (Ollama status, ChromaDB status) |
+| GET | `/api/models/status` | Check which models are loaded |
+| POST | `/api/transcribe` | Standalone voice transcription |
+| GET | `/api/export/{session_id}` | Export report as PDF/MD/JSON |
+
+### 3.3 Data Flow
+
+```
+1. User submits form (image + PDF + symptoms/voice)
+2. FastAPI receives multipart request
+3. Files saved to temp directory (/tmp/mediagent/{session_id}/)
+4. LangGraph Orchestrator initialized with state
+5. Vision Agent processes image → returns findings JSON
+6. RAG Agent retrieves context using symptoms + findings
+7. Report Agent synthesizes final clinical report
+8. Response returned to frontend as JSON
+9. Temp files deleted
+10. Frontend renders structured report
+```
+
+---
+
+## 4. Technical Requirements
+
+### 4.1 Backend Dependencies
+
+```
+# requirements.txt
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+langchain>=0.2.0
+langchain-community>=0.2.0
+langgraph>=0.1.0
+langchain-ollama>=0.1.0
+chromadb>=0.5.0
+sentence-transformers>=3.0.0
+pymupdf>=1.24.0
+openai-whisper>=20231117
+pytesseract>=0.3.10
+pillow>=10.0.0
+pydantic>=2.0.0
+python-multipart>=0.0.9
+httpx>=0.27.0
+python-dotenv>=1.0.0
+langsmith>=0.1.0
+```
+
+### 4.2 System Requirements
+
+| Component | Minimum | Recommended |
+|---|---|---|
+| RAM | 8 GB | 16 GB |
+| Storage | 20 GB | 50 GB |
+| GPU | None (CPU mode) | NVIDIA 8GB VRAM |
+| Python | 3.11+ | 3.11+ |
+| Node.js | 18+ | 20+ |
+| Ollama | Latest | Latest |
+
+### 4.3 Models Required
+
+```bash
+ollama pull llama3.1:8b          # 4.7 GB — Report Agent
+ollama pull llava:13b            # 8.0 GB — Vision Agent (use llava:7b for low RAM)
+```
+
+---
+
+## 5. User Stories
+
+### Epic 1 — Core Analysis
+
+- **US-001:** As a medical student, I want to upload a chest X-ray and get a differential diagnosis so that I can learn about radiological findings.
+- **US-002:** As a junior doctor, I want to upload a lab report PDF and describe patient symptoms to get ranked diagnoses so that I have a second-opinion reference.
+- **US-003:** As a patient, I want to describe my symptoms by voice so I don't have to type long descriptions.
+
+### Epic 2 — Results & Trust
+
+- **US-004:** As a user, I want to see the sources and evidence behind every diagnosis so I know the AI is not hallucinating.
+- **US-005:** As a developer, I want to see the full LangGraph trace so I can debug and improve the agents.
+- **US-006:** As a user, I want to see red-flag warnings prominently so I know when to seek urgent care.
+
+### Epic 3 — Export & Sharing
+
+- **US-007:** As a user, I want to export the report as a PDF so I can share it with my doctor.
+
+---
+
+## 6. UI/UX Requirements
+
+### 6.1 Pages
+
+| Page | Route | Description |
+|---|---|---|
+| Home / Input | `/` | Split panel: input form + live preview |
+| Results | `/results` | Structured report with tabs |
+| History | `/history` | Past sessions (in-memory, no persistence) |
+| System Status | `/status` | Model health, API status |
+
+### 6.2 Design Principles
+
+- **Medical-grade aesthetic:** Clean whites, deep blues, minimal color
+- **Information hierarchy:** Red flags > Diagnoses > Evidence > Next Steps
+- **Progressive disclosure:** Summary first, expandable detail cards
+- **Mobile-responsive:** Doctors use phones and tablets
+- **Dark mode support:** For clinical environments
+
+### 6.3 Key UI Components
+
+- Image drag-and-drop zone with DICOM preview
+- PDF upload with extracted text preview sidebar
+- Voice recorder with animated waveform
+- Confidence score radial progress indicators
+- Expandable diagnosis cards with ICD-10 badges
+- Red flag alert banners (high contrast)
+- Source citation chips with PubMed links
+- LangGraph trace timeline (collapsible)
+
+---
+
+## 7. Milestones
+
+| Phase | Description | Deliverable |
+|---|---|---|
+| Phase 0 | Repo setup, Ollama + ChromaDB scaffolding | Running `main.py` with health endpoint |
+| Phase 1 | Vision Agent + RAG Agent working individually | Unit tests passing for both agents |
+| Phase 2 | LangGraph orchestration wiring all 3 agents | Full pipeline `/api/analyze` returning JSON |
+| Phase 3 | FastAPI complete + Whisper integration | All API endpoints live |
+| Phase 4 | React frontend (Stitch) integrated | End-to-end demo working |
+| Phase 5 | Evaluation, README, LangSmith tracing | Portfolio-ready with benchmarks |
+
+---
+
+## 8. Out of Scope (v1.0)
+
+- EHR (Electronic Health Record) integration
+- Multi-language support beyond English
+- Mobile native app
+- Real-time streaming responses
+- Authentication / user accounts
+- HIPAA compliance
+- DICOM native support (use PNG conversion for now)
