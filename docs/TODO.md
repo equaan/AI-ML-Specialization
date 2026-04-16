@@ -192,11 +192,11 @@ Phase 4 Done When: Full demo works - upload image + type symptoms -> see formatt
 ### README
 - [ ] Project banner / demo GIF
 - [ ] Architecture diagram (from `CLAUDE.md`)
-- [ ] Quick start instructions
-- [ ] Benchmark results table
+- [x] Quick start instructions
+- [x] Benchmark results table
 - [ ] Tech stack badges
-- [ ] "How it works" section with agent explanation
-- [ ] Disclaimer section
+- [x] "How it works" section with agent explanation
+- [x] Disclaimer section
 
 ### Demo Prep
 - [ ] Record 2-minute Loom demo video
