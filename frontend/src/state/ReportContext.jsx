@@ -1,19 +1,56 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 
 const ReportContext = createContext(null);
+const STORAGE_KEY = "mediagent.report_state.v1";
+
+function loadInitialState() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return null;
+    }
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
 
 export function ReportProvider({ children }) {
-  const [currentSessionId, setCurrentSessionId] = useState(null);
-  const [currentReport, setCurrentReport] = useState(null);
-  const [currentLabReport, setCurrentLabReport] = useState(null);
+  const persisted = loadInitialState();
+
+  const [currentSessionId, setCurrentSessionId] = useState(persisted?.currentSessionId || null);
+  const [currentReport, setCurrentReport] = useState(persisted?.currentReport || null);
+  const [currentLabReport, setCurrentLabReport] = useState(persisted?.currentLabReport || null);
   const [analysisLoading, setAnalysisLoading] = useState(false);
-  const [currentInputs, setCurrentInputs] = useState({
-    symptoms: "",
-    transcript: "",
-    imageName: "",
-    pdfName: "",
-  });
-  const [history, setHistory] = useState([]);
+  const [currentInputs, setCurrentInputs] = useState(
+    persisted?.currentInputs || {
+      symptoms: "",
+      transcript: "",
+      imageName: "",
+      pdfName: "",
+    }
+  );
+  const [history, setHistory] = useState(persisted?.history || []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const snapshot = {
+      currentSessionId,
+      currentReport,
+      currentLabReport,
+      currentInputs,
+      history,
+    };
+
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+  }, [currentSessionId, currentReport, currentLabReport, currentInputs, history]);
 
   function updateAnalysis(payload) {
     const { sessionId, report, labReport, inputs } = payload;

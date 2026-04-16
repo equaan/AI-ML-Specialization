@@ -2,7 +2,7 @@ from backend.agents.rag_agent import RAGAgent
 from backend.models.schemas import VisionFindings
 
 
-def test_rag_agent_returns_at_least_one_condition() -> None:
+def test_rag_agent_returns_at_least_three_conditions_for_pneumonia_like_case() -> None:
     agent = RAGAgent()
     result = agent.analyze(
         "fever, cough, bilateral chest pain",
@@ -17,5 +17,5 @@ def test_rag_agent_returns_at_least_one_condition() -> None:
         ),
     )
 
-    assert len(result.relevant_conditions) >= 1
+    assert len(result.relevant_conditions) >= 3
     assert result.retrieval_count >= 0

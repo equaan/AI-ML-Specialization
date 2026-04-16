@@ -1,8 +1,14 @@
 from __future__ import annotations
 
+import argparse
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from datasets import load_dataset
 
@@ -84,5 +90,16 @@ def ingest_medqa(limit: int | None = None, split: str = "train") -> int:
 
 
 if __name__ == "__main__":
-    total = ingest_medqa(limit=100)
+    parser = argparse.ArgumentParser(description="Ingest MedQA chunks into ChromaDB.")
+    parser.add_argument("--limit", type=int, default=100, help="Number of records to process (default: 100)")
+    parser.add_argument(
+        "--split",
+        type=str,
+        default="train",
+        choices=["train", "validation", "test"],
+        help="Dataset split to ingest (default: train)",
+    )
+    args = parser.parse_args()
+
+    total = ingest_medqa(limit=args.limit, split=args.split)
     print(f"Ingested {total} MedQA chunks into ChromaDB.")

@@ -5,9 +5,14 @@ __pycache__/
 .env
 data/raw/
 data/processed/
+data/chromadb/
 frontend/node_modules/
 frontend/dist/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .DS_Store
+.demo/
+ngrok_runtime.log
+ngrok_runtime.err.log
+ngrok_url.txt

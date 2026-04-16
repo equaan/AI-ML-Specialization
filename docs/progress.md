@@ -301,3 +301,256 @@ Put the downloaded assets here:
 - The `uvicorn`, `pytest`, dataset-ingestion, and live-model verification steps are still pending until dependencies are installed on a stronger machine.
 - The frontend files are scaffolded, but `npm install` and browser verification are still pending.
 - The `progress.md` file should now be used as the handoff checklist when you switch to the stronger PC.
+
+## Powerful machine update (current session)
+
+### Environment and runtime verification completed
+- Created and used local virtual environment: `venv`
+- Upgraded pip and installed full backend dependencies from `requirements.txt`
+- Verified backend can start with:
+
+```powershell
+.\venv\Scripts\python -m uvicorn backend.main:app --port 8000
+```
+
+- Verified API endpoints while server was running:
+  - `GET /api/health` returned degraded status because Ollama is not installed on this machine yet
+  - `GET /api/models/status` returned `chromadb: true` and model flags false (expected without Ollama)
+
+### Test execution completed
+- Ran full suite:
+
+```powershell
+.\venv\Scripts\python -m pytest -q
+```
+
+- Initial result: 2 failures in `tests/test_pdf_parser.py`
+- Root cause: `backend/tools/pdf_parser.py` attempted `.strip()` on optional regex group `range` when it was `None`
+- Fix applied in `backend/tools/pdf_parser.py`:
+  - Safe handling added:
+    - `range_match = match.group("range")`
+    - `reference_range = range_match.strip() if range_match else None`
+- Re-ran parser tests:
+
+```powershell
+.\venv\Scripts\python -m pytest tests/test_pdf_parser.py -q
+```
+
+- Result: `2 passed`
+- Re-ran full suite:
+
+```powershell
+.\venv\Scripts\python -m pytest -q
+```
+
+- Result: `11 passed`
+
+### Frontend verification completed
+- Installed frontend dependencies and built production bundle:
+
+```powershell
+cd frontend
+npm install
+npm run build
+```
+
+- Result: Vite build succeeded with generated assets in `frontend/dist`
+
+### Remaining blocker for model-backed tasks
+- Ollama is not installed (`ollama` command not found)
+- Next required machine task:
+  - Install Ollama
+  - Pull `llama3.1:8b`
+  - Pull `llava:13b` (or `llava:7b`)
+  - Re-run `/api/models/status` and then execute real `/api/analyze` model-backed checks
+
+### Additional execution notes from this same session
+- Attempted Ollama installation via Winget:
+
+```powershell
+winget install Ollama.Ollama --source winget --accept-package-agreements --accept-source-agreements
+winget install Ollama.Ollama --source winget --silent --accept-package-agreements --accept-source-agreements
+```
+
+- Result: installer download succeeded, but installation was canceled by installer flow (`exit code 5`)
+- Created local `.env` file with `LANGCHAIN_TRACING_V2=true` and project defaults copied from `.env.example`
+- Verified Chroma collection bootstrap succeeds with module invocation:
+
+```powershell
+$env:PYTHONPATH='.'
+.\venv\Scripts\python -m scripts.setup_chromadb
+```
+
+- Output confirmed all three collections initialized:
+  - `medqa_chunks`
+  - `pubmed_abstracts`
+  - `medical_guidelines`
+
+### Follow-up improvements completed after runtime validation
+- Added `DATASETS.md` with exact dataset sources, URLs, folder targets, and run commands.
+- Updated `README.md` to point to `DATASETS.md`.
+- Hardened scripts to run directly from repo root (without requiring manual `PYTHONPATH` export):
+  - `scripts/setup_chromadb.py`
+  - `scripts/ingest_medqa.py`
+  - `scripts/ingest_pubmed.py`
+- Added CLI options for ingestion scripts:
+  - `scripts/ingest_medqa.py --limit --split`
+  - `scripts/ingest_pubmed.py --queries --max-results-per-query`
+- Re-validated these scripts using `--help` and direct execution.
+
+### Ollama installation blocker diagnosed
+- Root cause from installer log: insufficient disk space on `C:`.
+- Free space at check time:
+  - `C:` ~1.19 GB free (not enough)
+  - `D:` ~1840 GB free
+- Installer rolled back after failing to copy CUDA runtime DLLs.
+
+### Additional test strengthening completed
+- Improved vision tests to explicitly cover random non-medical image warning path.
+- Improved RAG test to assert >=3 relevant conditions for the symptom case in TODO.
+- Re-ran full test suite successfully:
+  - `12 passed`
+
+## Ollama unblock + live model validation (latest)
+
+### Ollama successfully unblocked on low `C:` space machine
+- Found Ollama binary at `D:\Ollama\ollama.exe`.
+- Port `11434` was already in use by an existing Ollama process.
+- Confirmed Ollama API reachable with:
+
+## Phase 5 update (latest)
+
+### RAG benchmark completed (MedQA, MRR@5)
+- Added script: `scripts/evaluate_rag_medqa_mrr.py`
+  - Uses `RAGAgent` over 100 MedQA questions
+  - Deterministic evaluation mode (`first_n`) for reproducibility
+  - Offline-safe retrieval benchmark (PubMed disabled during scoring)
+  - Writes both JSON + Markdown reports under `data/processed/evaluation/`
+
+### Execution and metrics
+- Ensured MedQA vectors were available by ingesting 100 records:
+  - `python scripts/ingest_medqa.py --limit 100 --split train`
+- Ran evaluation:
+  - `python scripts/evaluate_rag_medqa_mrr.py --sample-size 100 --split train --selection first_n --seed 42`
+- Result:
+  - MRR@5: **0.079**
+  - Hit@5: **0.15** (15/100)
+
+### Artifacts generated
+- `data/processed/evaluation/rag_medqa_mrr_eval.json`
+- `data/processed/evaluation/rag_medqa_mrr_eval.md`
+
+### Full pipeline benchmark completed (MedMCQA, 50 questions)
+- Added script: `scripts/evaluate_pipeline_medmcqa_accuracy.py`
+  - Runs `MediAgentOrchestrator` end-to-end on MedMCQA MCQs
+  - Uses deterministic selection (`first_n`) for reproducible runs
+  - Scores Top-1 option accuracy via weighted option-to-report text matching
+
+### Execution and metrics
+- Run command:
+  - `python scripts/evaluate_pipeline_medmcqa_accuracy.py --sample-size 50 --split train --selection first_n --seed 42`
+- Result:
+  - Accuracy: **0.28** (**14/50**)
+  - Failures/Skipped: **0**
+
+### Artifacts generated
+- `data/processed/evaluation/pipeline_medmcqa_accuracy_eval.json`
+- `data/processed/evaluation/pipeline_medmcqa_accuracy_eval.md`
+
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:11434/api/tags" -Method Get
+```
+
+- Initial `llava:7b` pull failed because Ollama default model cache was still under:
+  - `C:\Users\student.VIT-SYS-943\.ollama\models\...`
+  - Error: `There is not enough space on the disk.`
+
+### Permanent runtime workaround used
+- Restarted Ollama server with model path redirected to `D:`:
+
+```powershell
+$env:OLLAMA_MODELS = "D:\OllamaModels"
+& "D:\Ollama\ollama.exe" serve
+```
+
+- Pulled required models successfully into `D:\OllamaModels`:
+  - `llama3.1:8b`
+  - `llava:7b`
+
+### Backend stability fix applied
+- Backend startup failed due import-time transformer stack incompatibility.
+- Applied code fix in `backend/rag/embedder.py`:
+  - Removed module-level `sentence_transformers` import.
+  - Added lazy import in `_get_model()`.
+  - Preserved hash-embedding fallback behavior.
+
+### Live API checks completed
+- Updated `.env` to align installed vision model:
+  - `VISION_MODEL=llava:7b`
+- Restarted backend and verified:
+  - `GET /api/health` -> `status: ok`, `ollama: true`, `chromadb: true`
+  - `GET /api/models/status` -> `llama3: true`, `llava: true`, `chromadb: true`
+- Executed live end-to-end analyze smoke test:
+
+```powershell
+curl.exe -s -X POST "http://127.0.0.1:8000/api/analyze" -F "symptoms=fever, cough, chest pain for 3 days"
+```
+
+- Result: returned valid `session_id` + structured `report` JSON with differential diagnoses, urgency, and disclaimer.
+
+### Regression check
+- Re-ran full test suite:
+  - `12 passed`
+  - LangSmith warning remains expected until `LANGSMITH_API_KEY` is configured.
+
+## Stitch frontend activation + Phase 5 kickoff (latest)
+
+### Stitch UI is now the main frontend
+- Copied all exported Stitch pages from `stitch-code/` into `frontend/public/stitch/`.
+- Rewired `frontend/src/App.jsx` routes to load Stitch `code.html` pages directly via iframe.
+- Root route now serves Stitch New Analysis screen as primary frontend entry.
+- Verified frontend build succeeds after the switch:
+
+```powershell
+cd frontend
+npm run build
+```
+
+### Phase 5 started: Vision evaluation on HAM10000
+- Added evaluation script:
+  - `scripts/evaluate_vision_ham10000.py`
+- Script behavior:
+  - Samples 50 HAM10000 images
+  - Runs `VisionAgent` on each sample
+  - Records metric as medical-image detection accuracy (`image_type != non_medical`)
+  - Writes reports to `data/processed/evaluation/`
+
+- Executed:
+
+```powershell
+.\venv\Scripts\python.exe scripts\evaluate_vision_ham10000.py --sample-size 50
+```
+
+- Result:
+  - Accuracy: `1.0`
+  - JSON report: `data/processed/evaluation/vision_ham10000_eval.json`
+  - Markdown report: `data/processed/evaluation/vision_ham10000_eval.md`
+
+### Validation
+- Re-ran tests scoped to repo tests directory:
+
+```powershell
+D:\AI-ML-Specialization\venv\Scripts\python.exe -m pytest D:\AI-ML-Specialization\tests -q
+```
+
+- Result: `12 passed`
+
+## README benchmark documentation completed (latest)
+
+- Updated `README.md` to include a dedicated evaluation results section with:
+  - Vision Agent result on HAM10000 (50 samples)
+  - RAG Agent result on MedQA (100 samples, MRR@5)
+  - Full pipeline result on MedMCQA (50 samples, top-1 accuracy)
+- Added direct artifact paths for JSON and Markdown reports under `data/processed/evaluation/`.
+- Marked Phase 5 task in `TODO.md` as complete:
+  - `Document all results in README.md`

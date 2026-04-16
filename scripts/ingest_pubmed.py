@@ -1,6 +1,14 @@
 from __future__ import annotations
 
+import argparse
+import sys
 from dataclasses import dataclass
+from pathlib import Path
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from backend.rag.embedder import BioBERTEmbedder
 from backend.rag.vectorstore import get_chroma_client
@@ -71,5 +79,21 @@ def ingest_pubmed(queries: list[str] | None = None, max_results_per_query: int =
 
 
 if __name__ == "__main__":
-    total = ingest_pubmed()
+    parser = argparse.ArgumentParser(description="Ingest PubMed abstracts into ChromaDB.")
+    parser.add_argument(
+        "--queries",
+        type=str,
+        default="",
+        help="Comma-separated search queries. Uses defaults if omitted.",
+    )
+    parser.add_argument(
+        "--max-results-per-query",
+        type=int,
+        default=5,
+        help="Number of PubMed hits per query (default: 5)",
+    )
+    args = parser.parse_args()
+
+    query_list = [q.strip() for q in args.queries.split(",") if q.strip()] if args.queries else None
+    total = ingest_pubmed(queries=query_list, max_results_per_query=args.max_results_per_query)
     print(f"Ingested {total} PubMed abstracts into ChromaDB.")

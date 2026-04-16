@@ -124,6 +124,27 @@ async def models_status() -> ModelStatus:
     return await get_model_status(settings)
 
 
+@app.get("/health", response_model=HealthStatus, tags=["system"])
+async def health_check_compat() -> HealthStatus:
+    # Compatibility alias for demo scripts and tunnel probes.
+    return await health_check()
+
+
+@app.get("/stats", tags=["system"])
+async def stats_compat() -> dict:
+    # Compatibility endpoint for quick tunnel checks.
+    model_status = await get_model_status(settings)
+    return {
+        "status": "ok",
+        "services": {
+            "llama3": model_status.llama3,
+            "llava": model_status.llava,
+            "whisper": model_status.whisper,
+            "chromadb": model_status.chromadb,
+        },
+    }
+
+
 @app.post(f"{settings.api_prefix}/transcribe", tags=["analysis"])
 async def transcribe_audio(audio: UploadFile = File(...)) -> dict[str, str]:
     suffix = Path(audio.filename or "audio.webm").suffix or ".webm"

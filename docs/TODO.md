@@ -9,7 +9,7 @@
 
 ### Repo & Environment
 - [ ] Create GitHub repo `mediagent`
-- [ ] Initialize Python 3.11 virtual environment
+- [x] Initialize Python 3.11 virtual environment
 - [x] Create `requirements.txt` with all dependencies
 - [x] Create `.env.example` and `.env` (gitignored)
 - [x] Create folder structure as defined in `CLAUDE.md`
@@ -17,13 +17,13 @@
 - [x] Add `.gitignore` (venv, .env, data/raw, __pycache__, *.pyc)
 
 ### Ollama Setup
-- [ ] Install Ollama locally (`https://ollama.com`)
-- [ ] Pull `llama3.1:8b` model
-- [ ] Pull `llava:13b` model (or `llava:7b` if RAM < 16GB)
-- [ ] Test Ollama API: `curl http://localhost:11434/api/tags`
+- [x] Install Ollama locally (`https://ollama.com`)
+- [x] Pull `llama3.1:8b` model
+- [x] Pull `llava:13b` model (or `llava:7b` if RAM < 16GB)
+- [x] Test Ollama API: `curl http://localhost:11434/api/tags`
 
 ### ChromaDB Setup
-- [ ] Install ChromaDB (`pip install chromadb`)
+- [x] Install ChromaDB (`pip install chromadb`)
 - [x] Create `backend/rag/vectorstore.py` with collection init
 - [x] Create three collections: `medqa_chunks`, `pubmed_abstracts`, `medical_guidelines`
 - [x] Write and test `scripts/setup_chromadb.py`
@@ -32,7 +32,7 @@
 - [x] Create `backend/main.py` with `GET /api/health` endpoint
 - [x] Create `backend/config.py` with env var loading
 - [x] Create `backend/models/schemas.py` with all Pydantic models
-- [ ] Test: `uvicorn backend.main:app --reload` runs without error
+- [x] Test: `uvicorn backend.main:app --reload` runs without error
 
 Phase 0 Done When: `GET /api/health` returns `{"status": "ok", "ollama": true, "chromadb": true}`
 
@@ -49,10 +49,10 @@ Phase 0 Done When: `GET /api/health` returns `{"status": "ok", "ollama": true, "
   - [x] LLaVA call via `langchain-ollama` `ChatOllama` with image support
   - [x] Structured output parsing -> `VisionFindings` Pydantic schema
   - [x] Error handling for non-medical / unreadable images
-- [ ] Write `VISION_AGENT_PROMPT` in `PROMPTS.md`
-- [ ] Unit test: `tests/test_vision_agent.py`
-  - [ ] Test with sample chest X-ray PNG
-  - [ ] Test with a random non-medical image (should return warning)
+- [x] Write `VISION_AGENT_PROMPT` in `PROMPTS.md`
+- [x] Unit test: `tests/test_vision_agent.py`
+  - [x] Test with sample chest X-ray PNG
+  - [x] Test with a random non-medical image (should return warning)
 
 ### PDF Parser Tool
 - [x] Create `backend/tools/pdf_parser.py`
@@ -78,10 +78,10 @@ Phase 0 Done When: `GET /api/health` returns `{"status": "ok", "ollama": true, "
   - [x] PubMed API tool call
   - [x] Context merging and deduplication
   - [x] Returns `RAGContext` Pydantic schema
-- [ ] Write `RAG_AGENT_PROMPT` in `PROMPTS.md`
-- [ ] Unit test: `tests/test_rag_agent.py`
-  - [ ] Test with symptom: "fever, cough, bilateral chest pain"
-  - [ ] Verify at least 3 relevant conditions returned
+- [x] Write `RAG_AGENT_PROMPT` in `PROMPTS.md`
+- [x] Unit test: `tests/test_rag_agent.py`
+  - [x] Test with symptom: "fever, cough, bilateral chest pain"
+  - [x] Verify at least 3 relevant conditions returned
 
 Phase 1 Done When: Both agents return valid Pydantic objects when called individually.
 
@@ -104,14 +104,14 @@ Phase 1 Done When: Both agents return valid Pydantic objects when called individ
   - [x] Structured output -> `ClinicalReport` Pydantic schema
   - [x] ICD-10 code mapping (use static dict for top-50 conditions)
   - [x] Disclaimer injection (always appended, never skippable)
-- [ ] Write `REPORT_AGENT_PROMPT` in `PROMPTS.md`
+- [x] Write `REPORT_AGENT_PROMPT` in `PROMPTS.md`
 
 ### Integration Test
-- [ ] Run full pipeline test in `tests/test_pipeline.py`
-  - [ ] Input: sample X-ray + "chest pain and fever" text
-  - [ ] Verify `ClinicalReport` schema returned
-  - [ ] Verify disclaimer present
-  - [ ] Verify at least 1 differential diagnosis with ICD-10 code
+- [x] Run full pipeline test in `tests/test_pipeline.py`
+  - [x] Input: sample X-ray + "chest pain and fever" text
+  - [x] Verify `ClinicalReport` schema returned
+  - [x] Verify disclaimer present
+  - [x] Verify at least 1 differential diagnosis with ICD-10 code
 
 Phase 2 Done When: Full pipeline returns a valid `ClinicalReport` JSON from a test script.
 
@@ -143,9 +143,9 @@ Phase 2 Done When: Full pipeline returns a valid `ClinicalReport` JSON from a te
 - [x] Add global exception handler returning clean error JSON
 
 ### LangSmith Tracing
-- [ ] Add `LANGCHAIN_TRACING_V2=true` to env
-- [ ] Add `LANGSMITH_API_KEY` to env
-- [ ] Verify traces appear in LangSmith dashboard
+- [x] Add `LANGCHAIN_TRACING_V2=true` to env
+- [x] Add `LANGSMITH_API_KEY` to env
+- [x] Verify traces appear in LangSmith dashboard
 
 Phase 3 Done When: Postman/curl can hit `/api/analyze` with a real image and get a valid JSON response.
 
@@ -154,8 +154,8 @@ Phase 3 Done When: Postman/curl can hit `/api/analyze` with a real image and get
 ## Phase 4 - Frontend Integration (Google Stitch -> React)
 
 ### Stitch Generation
-- [ ] Use `STITCH.md` prompt to generate UI in Google Stitch
-- [ ] Export React components from Stitch
+- [x] Use `STITCH.md` prompt to generate UI in Google Stitch
+- [x] Export React components from Stitch
 - [x] Set up React project in `frontend/`
 
 ### Frontend Components
@@ -184,10 +184,10 @@ Phase 4 Done When: Full demo works - upload image + type symptoms -> see formatt
 ## Phase 5 - Polish, Eval & Portfolio Readiness
 
 ### Evaluation
-- [ ] Run Vision Agent on 50 HAM10000 skin images -> record accuracy
-- [ ] Run RAG Agent on 100 MedQA questions -> record MRR@5
-- [ ] Run full pipeline on 50 MedMCQA questions -> record accuracy
-- [ ] Document all results in `README.md`
+- [x] Run Vision Agent on 50 HAM10000 skin images -> record accuracy
+- [x] Run RAG Agent on 100 MedQA questions -> record MRR@5
+- [x] Run full pipeline on 50 MedMCQA questions -> record accuracy
+- [x] Document all results in `README.md`
 
 ### README
 - [ ] Project banner / demo GIF

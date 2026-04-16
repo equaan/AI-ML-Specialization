@@ -54,11 +54,15 @@ User Input (Image + PDF + Text/Voice)
 
 ```
 mediagent/
-├── CLAUDE.md               ← This file
-├── PRD.md                  ← Product Requirements Document
-├── TODO.md                 ← Phased task tracker
-├── PROMPTS.md              ← LLM prompt templates
-├── STITCH.md               ← Google Stitch frontend prompt
+├── README.md               ← Repo face/introduction
+├── docs/
+│   ├── CLAUDE.md           ← This file
+│   ├── PRD.md              ← Product Requirements Document
+│   ├── TODO.md             ← Phased task tracker
+│   ├── PROMPTS.md          ← LLM prompt templates
+│   ├── STITCH.md           ← Google Stitch frontend prompt
+│   ├── DATASETS.md         ← Dataset guide
+│   └── progress.md         ← Build/run history
 │
 ├── backend/
 │   ├── main.py             ← FastAPI entry point
@@ -139,14 +143,14 @@ mediagent/
 - **Input:** Medical image (X-ray, skin lesion, eye fundus, etc.)
 - **Model:** LLaVA 1.6 via Ollama
 - **Output:** Structured JSON with `{findings: [], anomalies: [], image_type: "", confidence: float}`
-- **Prompt:** See `PROMPTS.md → VISION_AGENT_PROMPT`
+- **Prompt:** See `docs/PROMPTS.md → VISION_AGENT_PROMPT`
 
 ### 2. RAG Agent (`rag_agent.py`)
 - **Input:** Patient symptoms (text) + Vision Agent findings
 - **Tools:** ChromaDB retriever, PubMed API search tool
 - **Knowledge Base:** MedQA chunks + PubMed abstracts (ingested at setup)
 - **Output:** `{relevant_conditions: [], supporting_evidence: [], sources: []}`
-- **Prompt:** See `PROMPTS.md → RAG_AGENT_PROMPT`
+- **Prompt:** See `docs/PROMPTS.md → RAG_AGENT_PROMPT`
 
 ### 3. Report Agent (`report_agent.py`)
 - **Input:** Outputs from Vision Agent + RAG Agent
@@ -164,7 +168,7 @@ mediagent/
   "disclaimer": "For clinical review only. Not a substitute for professional diagnosis."
 }
 ```
-- **Prompt:** See `PROMPTS.md → REPORT_AGENT_PROMPT`
+- **Prompt:** See `docs/PROMPTS.md → REPORT_AGENT_PROMPT`
 
 ---
 

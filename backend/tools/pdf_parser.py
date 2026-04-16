@@ -85,7 +85,8 @@ class PDFParser:
         for match in pattern.finditer(text):
             test_name = match.group("name").strip(" :-")
             value = match.group("value").strip()
-            reference_range = match.group("range").strip() or None
+            range_match = match.group("range")
+            reference_range = range_match.strip() if range_match else None
             flag = self._infer_flag(value, reference_range, text, test_name)
             results.append(
                 LabTestResult(

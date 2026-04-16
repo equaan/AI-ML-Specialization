@@ -1,0 +1,33 @@
+# MediAgent UI/UX Refinement Plan (Portfolio Enhancement)
+
+## 1. Goal
+Elevate the MediAgent UI from a standard "form-to-result" flow to a "Transparent Agentic Workflow" that showcases the underlying LangGraph architecture and RAG complexity.
+
+## 2. Proposed Additional Screens/Features
+
+### A. Agentic Trace Explorer (Deep Dive)
+- **Purpose:** Visualize the "brain" of the application.
+- **Key Features:** 
+  - Node-by-node input/output logs.
+  - Confidence scoring per agent.
+  - Latency and token usage metrics.
+  - Raw JSON toggle for developers.
+
+### B. Lab Report "Data Lens" View
+- **Purpose:** Bridge the gap between the PDF upload and the Clinical Summary.
+- **Key Features:**
+  - Side-by-side view: PDF original vs. Extracted Entities.
+  - Highlighted medical terms (e.g., "Hemoglobin", "WBC").
+  - Verification checkmarks (User can confirm AI-extracted values).
+
+### C. Knowledge Context Modal
+- **Purpose:** Explain the "R" in RAG.
+- **Key Features:**
+  - Snippets from PubMed abstracts.
+  - Similarity scores (how relevant was this document?).
+  - Direct links to NCBI for verification.
+
+## 3. UI/UX Refinement Focus
+- **Monospace Typography:** Increase use of JetBrains Mono for "System Logs" to reinforce the AI/ML nature.
+- **Micro-interactions:** Add loading states that describe *which* agent is currently thinking.
+- **Trust Indicators:** Clearer mapping between findings and citations.
