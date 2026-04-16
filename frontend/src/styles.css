@@ -771,6 +771,19 @@ textarea:focus {
   padding: 16px;
 }
 
+.records-row,
+.lab-row {
+  display: grid;
+  gap: 12px;
+}
+
+.records-row {
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
 .lab-summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

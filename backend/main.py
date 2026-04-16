@@ -199,12 +199,36 @@ async def analyze_patient(
     if not final_report:
         raise HTTPException(status_code=500, detail="Analysis completed without a final report.")
 
-    report_store.save(session_id, final_report)
+    report_store.save(
+        session_id=session_id,
+        report=final_report,
+        lab_report=parsed_lab_report.model_dump() if parsed_lab_report else None,
+        inputs={
+            "symptoms": symptoms,
+            "image_name": image.filename if image else None,
+            "pdf_name": pdf.filename if pdf else None,
+            "voice_name": voice.filename if voice else None,
+        },
+    )
     return {
         "session_id": session_id,
         "report": final_report,
         "lab_report": parsed_lab_report.model_dump() if parsed_lab_report else None,
     }
+
+
+@app.get(f"{settings.api_prefix}/reports", tags=["analysis"])
+async def list_reports(limit: int = 25) -> dict[str, list[dict]]:
+    items = report_store.list_recent(limit=limit)
+    return {"reports": items}
+
+
+@app.get(f"{settings.api_prefix}/reports/{{session_id}}", tags=["analysis"])
+async def get_report(session_id: str) -> dict:
+    item = report_store.get_full(session_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Session report not found.")
+    return item
 
 
 @app.get(f"{settings.api_prefix}/export/{{session_id}}", tags=["analysis"])

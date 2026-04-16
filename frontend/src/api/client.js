@@ -40,4 +40,16 @@ export async function exportReport(sessionId, format) {
   return response.data;
 }
 
+export async function getRecentReports(limit = 25) {
+  const response = await apiClient.get("/api/reports", {
+    params: { limit },
+  });
+  return response.data?.reports || [];
+}
+
+export async function getReportBySession(sessionId) {
+  const response = await apiClient.get(`/api/reports/${sessionId}`);
+  return response.data;
+}
+
 export default apiClient;

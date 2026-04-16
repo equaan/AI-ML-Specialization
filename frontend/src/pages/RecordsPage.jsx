@@ -1,7 +1,7 @@
 import { useReportContext } from "../state/ReportContext";
 
 export function RecordsPage() {
-  const { history } = useReportContext();
+  const { history, currentSessionId, setCurrentFromHistory } = useReportContext();
 
   return (
     <div className="stack-page">
@@ -21,11 +21,17 @@ export function RecordsPage() {
               <span>Created</span>
             </div>
             {history.map((item) => (
-              <div key={item.sessionId} className="records-row">
+              <button
+                key={item.sessionId}
+                className="records-row"
+                type="button"
+                onClick={() => setCurrentFromHistory(item.sessionId)}
+                aria-pressed={item.sessionId === currentSessionId}
+              >
                 <strong>{item.sessionId}</strong>
                 <p>{item.report?.patient_summary}</p>
                 <span>{new Date(item.createdAt).toLocaleString()}</span>
-              </div>
+              </button>
             ))}
           </div>
         ) : (
