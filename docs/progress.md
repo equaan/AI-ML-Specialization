@@ -81,7 +81,7 @@
 - Added baseline styling in [`frontend/src/styles.css`](/c:/Users/MOHAMMAD%20EQUAAN/Desktop/Specialization/frontend/src/styles.css)
 
 ### Stitch integration review
-- Read every exported text/code file inside `stitch-code/`
+- Read every exported text/code file inside `frontend/.stitch-code/`
 - Reviewed all Stitch screenshot exports in:
   - `agent_reasoning_trace_explorer`
   - `clinical_workspace_login`
@@ -506,7 +506,7 @@ curl.exe -s -X POST "http://127.0.0.1:8000/api/analyze" -F "symptoms=fever, coug
 ## Stitch frontend activation + Phase 5 kickoff (latest)
 
 ### Stitch UI is now the main frontend
-- Copied all exported Stitch pages from `stitch-code/` into `frontend/public/stitch/`.
+- Copied all exported Stitch pages from `frontend/.stitch-code/` into `frontend/public/stitch/`.
 - Rewired `frontend/src/App.jsx` routes to load Stitch `code.html` pages directly via iframe.
 - Root route now serves Stitch New Analysis screen as primary frontend entry.
 - Verified frontend build succeeds after the switch:
