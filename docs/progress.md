@@ -650,3 +650,80 @@ D:\AI-ML-Specialization\venv\Scripts\python.exe -m pytest D:\AI-ML-Specializatio
   - HAM10000 classification metrics
   - CXR pneumonia metrics
   - MRI narrow-task metrics
+
+## HAM10000 training pipeline started (current session)
+
+### Baseline training pipeline completed
+- Added reusable HAM10000 dataset utilities in:
+  - `backend/training/ham10000_dataset.py`
+- Added baseline training script:
+  - `scripts/train_ham10000_baseline.py`
+- Added coverage for dataset loading/splitting:
+  - `tests/test_ham10000_dataset.py`
+- Updated `requirements.txt` so the repo declares the training stack now used:
+  - `torch`
+  - `pandas`
+  - `scikit-learn`
+
+### What the trainer does now
+- Loads HAM10000 from the canonical dataset path.
+- Uses metadata-driven labels for the 7 lesion classes:
+  - `akiec`
+  - `bcc`
+  - `bkl`
+  - `df`
+  - `mel`
+  - `nv`
+  - `vasc`
+- Creates reproducible train/validation/test splits.
+- Falls back safely when tiny smoke-test subsets are too small for strict stratification.
+- Trains a simple CNN baseline in PyTorch.
+- Saves:
+  - model checkpoint
+  - metrics JSON
+
+### Local validation completed
+- Ran focused tests:
+
+```powershell
+.\venv\Scripts\python.exe -m pytest tests\test_ham10000_dataset.py -q
+```
+
+- Result:
+  - `1 passed`
+
+### Smoke training run completed
+- Executed:
+
+```powershell
+.\venv\Scripts\python.exe scripts\train_ham10000_baseline.py --epochs 1 --batch-size 16 --max-samples 140 --image-size 64 --output-dir data\processed\models\ham10000_smoke
+```
+
+- Result:
+  - training completed successfully on CPU
+  - checkpoint saved
+  - metrics saved
+
+### Smoke-run metrics
+- Dataset path:
+  - `data/raw/skin/ham10000`
+- Split sizes:
+  - train: `98`
+  - validation: `21`
+  - test: `21`
+- Validation accuracy after 1 epoch on the smoke subset:
+  - `0.6667`
+- Test accuracy after 1 epoch on the smoke subset:
+  - `0.6667`
+
+### Important interpretation
+- This is only a **baseline smoke run**, not the final HAM10000 result.
+- The subset was intentionally small and imbalanced.
+- The value of this step is that the repo now has a working, end-to-end specialist training path instead of only heuristic vision behavior.
+
+### Immediate next HAM10000 work
+1. Train on the full HAM10000 dataset.
+2. Add weighted loss or sampling to address class imbalance.
+3. Record per-class metrics, not just overall accuracy.
+4. Save an inference-ready model artifact that the backend can load.
+5. Integrate the trained skin model into `VisionAgent` for skin-image routing before generic fallback logic.
