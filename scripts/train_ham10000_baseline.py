@@ -100,6 +100,68 @@ def _accuracy(model: nn.Module, loader: DataLoader, device: torch.device) -> flo
     return (correct / total) if total else 0.0
 
 
+def _compute_class_weights(records: list[Ham10000Record]) -> torch.Tensor:
+    counts = Counter(record.label_index for record in records)
+    max_count = max(counts.values())
+    weights = []
+    for class_index in range(len(HAM10000_CLASSES)):
+        class_count = counts.get(class_index, 1)
+        weights.append(max_count / class_count)
+    return torch.tensor(weights, dtype=torch.float32)
+
+
+def _evaluate_predictions(model: nn.Module, loader: DataLoader, device: torch.device) -> dict:
+    model.eval()
+    total = 0
+    correct = 0
+    class_tp = Counter()
+    class_total = Counter()
+    class_pred = Counter()
+
+    with torch.no_grad():
+        for inputs, labels in loader:
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+            logits = model(inputs)
+            preds = logits.argmax(dim=1)
+
+            correct += int((preds == labels).sum().item())
+            total += int(labels.numel())
+
+            for label, pred in zip(labels.tolist(), preds.tolist()):
+                class_total[label] += 1
+                class_pred[pred] += 1
+                if label == pred:
+                    class_tp[label] += 1
+
+    per_class: dict[str, dict[str, float | int]] = {}
+    balanced_acc_components: list[float] = []
+    for class_index, class_name in enumerate(HAM10000_CLASSES):
+        total_for_class = class_total[class_index]
+        predicted_for_class = class_pred[class_index]
+        true_positive = class_tp[class_index]
+        recall = (true_positive / total_for_class) if total_for_class else 0.0
+        precision = (true_positive / predicted_for_class) if predicted_for_class else 0.0
+        per_class[class_name] = {
+            "support": total_for_class,
+            "precision": round(precision, 4),
+            "recall": round(recall, 4),
+        }
+        if total_for_class:
+            balanced_acc_components.append(recall)
+
+    balanced_accuracy = (
+        sum(balanced_acc_components) / len(balanced_acc_components)
+        if balanced_acc_components
+        else 0.0
+    )
+    return {
+        "accuracy": round((correct / total) if total else 0.0, 4),
+        "balanced_accuracy": round(balanced_accuracy, 4),
+        "per_class": per_class,
+    }
+
+
 def train(
     dataset_dir: Path,
     output_dir: Path,
@@ -128,10 +190,12 @@ def train(
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = Ham10000BaselineCNN().to(device)
-    criterion = nn.CrossEntropyLoss()
+    class_weights = _compute_class_weights(train_records).to(device)
+    criterion = nn.CrossEntropyLoss(weight=class_weights)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     history: list[dict] = []
+    best_val_accuracy = -1.0
     for epoch in range(1, epochs + 1):
         model.train()
         running_loss = 0.0
@@ -150,16 +214,20 @@ def train(
             sample_count += int(labels.size(0))
 
         train_loss = (running_loss / sample_count) if sample_count else 0.0
-        val_accuracy = _accuracy(model, val_loader, device)
+        val_metrics = _evaluate_predictions(model, val_loader, device)
+        val_accuracy = float(val_metrics["accuracy"])
         history.append(
             {
                 "epoch": epoch,
                 "train_loss": round(train_loss, 4),
                 "val_accuracy": round(val_accuracy, 4),
+                "val_balanced_accuracy": val_metrics["balanced_accuracy"],
             }
         )
+        if val_accuracy > best_val_accuracy:
+            best_val_accuracy = val_accuracy
 
-    test_accuracy = _accuracy(model, test_loader, device)
+    test_metrics = _evaluate_predictions(model, test_loader, device)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     model_path = output_dir / "ham10000_baseline.pt"
@@ -170,6 +238,7 @@ def train(
             "state_dict": model.state_dict(),
             "class_names": HAM10000_CLASSES,
             "image_size": image_size,
+            "class_weights": class_weights.detach().cpu().tolist(),
         },
         model_path,
     )
@@ -190,8 +259,16 @@ def train(
         "learning_rate": learning_rate,
         "image_size": image_size,
         "device": str(device),
+        "loss": "weighted_cross_entropy",
+        "class_weights": {
+            HAM10000_CLASSES[index]: round(float(weight), 4)
+            for index, weight in enumerate(class_weights.detach().cpu().tolist())
+        },
         "history": history,
-        "test_accuracy": round(test_accuracy, 4),
+        "best_validation_accuracy": round(best_val_accuracy, 4),
+        "test_accuracy": test_metrics["accuracy"],
+        "test_balanced_accuracy": test_metrics["balanced_accuracy"],
+        "test_per_class": test_metrics["per_class"],
         "model_path": str(model_path),
     }
     metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")

@@ -727,3 +727,53 @@ D:\AI-ML-Specialization\venv\Scripts\python.exe -m pytest D:\AI-ML-Specializatio
 3. Record per-class metrics, not just overall accuracy.
 4. Save an inference-ready model artifact that the backend can load.
 5. Integrate the trained skin model into `VisionAgent` for skin-image routing before generic fallback logic.
+
+## HAM10000 trainer upgrade: imbalance-aware metrics (current session)
+
+### Trainer improvements completed
+- Upgraded `scripts/train_ham10000_baseline.py` to use:
+  - weighted cross-entropy loss derived from class frequency
+  - validation balanced accuracy tracking
+  - per-class precision/recall reporting on the test split
+  - saved class-weight metadata in the checkpoint and metrics artifact
+- Added test coverage for class-weight behavior in:
+  - `tests/test_ham10000_dataset.py`
+
+### Validation completed
+- Ran:
+
+```powershell
+.\venv\Scripts\python.exe -m pytest tests\test_ham10000_dataset.py -q
+```
+
+- Result:
+  - `2 passed`
+
+### Weighted smoke run completed
+- Executed:
+
+```powershell
+.\venv\Scripts\python.exe scripts\train_ham10000_baseline.py --epochs 1 --batch-size 16 --max-samples 140 --image-size 64 --output-dir data\processed\models\ham10000_smoke_weighted
+```
+
+- Result:
+  - training completed successfully
+  - weighted-loss metrics file generated
+  - checkpoint saved
+
+### Weighted smoke-run interpretation
+- Raw top-line accuracy dropped on the tiny subset:
+  - test accuracy: `0.1429`
+- Balanced accuracy and per-class metrics are now visible:
+  - test balanced accuracy: `0.2`
+- This is not a regression in itself; it shows the trainer is no longer simply benefiting from the dominant `nv` class when scoring a very small subset.
+- Conclusion:
+  - the trainer is now better instrumented
+  - final judgement should wait for a larger/full-data run, not a tiny smoke subset
+
+### Immediate next HAM10000 work (updated)
+1. Run a longer training job on the full HAM10000 dataset.
+2. Add macro-F1 and confusion-matrix reporting.
+3. Save the best checkpoint by validation balanced accuracy.
+4. Build an inference wrapper so `VisionAgent` can load the trained skin model.
+5. Then move to the chest X-ray specialist baseline.
