@@ -5,9 +5,10 @@ from io import BytesIO
 from pathlib import Path
 
 from PIL import Image, UnidentifiedImageError
+import pydicom
 
 
-SUPPORTED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".bmp", ".webp"}
+SUPPORTED_IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".bmp", ".webp", ".dcm"}
 
 
 def validate_image_path(image_path: str | Path) -> Path:
@@ -21,12 +22,29 @@ def validate_image_path(image_path: str | Path) -> Path:
 
 def load_image(image_path: str | Path) -> Image.Image:
     path = validate_image_path(image_path)
+    if path.suffix.lower() == ".dcm":
+        return _load_dicom_image(path)
+
     try:
         image = Image.open(path)
         image.load()
         return image.convert("RGB")
     except UnidentifiedImageError as exc:
         raise ValueError(f"Unreadable image file: {path}") from exc
+
+
+def _load_dicom_image(path: Path) -> Image.Image:
+    try:
+        dcm = pydicom.dcmread(str(path))
+        array = dcm.pixel_array.astype("float32")
+        array = array - array.min()
+        max_value = float(array.max())
+        if max_value > 0:
+            array = array / max_value
+        array = (array * 255.0).clip(0, 255).astype("uint8")
+        return Image.fromarray(array, mode="L").convert("RGB")
+    except Exception as exc:
+        raise ValueError(f"Unreadable DICOM image file: {path}") from exc
 
 
 def resize_image(image: Image.Image, max_size: tuple[int, int] = (1024, 1024)) -> Image.Image:

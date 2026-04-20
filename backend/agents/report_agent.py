@@ -12,6 +12,7 @@ from backend.models.schemas import (
     ClinicalReport,
     DifferentialDiagnosis,
     RAGContext,
+    RelevantCondition,
     VisionFindings,
 )
 
@@ -66,8 +67,21 @@ class ReportAgent:
                 reconciled.red_flags,
                 patient_symptoms,
             )
+            reconciled.estimated_urgency = self._apply_urgency_guardrails(
+                reconciled.estimated_urgency,
+                patient_symptoms,
+                reconciled.red_flags,
+                reconciled.differential_diagnosis,
+            )
             return reconciled
-        return self._generate_fallback_report(patient_symptoms, vision, rag)
+        fallback = self._generate_fallback_report(patient_symptoms, vision, rag)
+        fallback.estimated_urgency = self._apply_urgency_guardrails(
+            fallback.estimated_urgency,
+            patient_symptoms,
+            fallback.red_flags,
+            fallback.differential_diagnosis,
+        )
+        return fallback
 
     def _apply_rag_consistency_overrides(
         self,
@@ -95,7 +109,7 @@ class ReportAgent:
                     icd_10_code=ICD10_MAP.get(condition.condition, "R69"),
                     confidence_score=LIKELIHOOD_TO_SCORE.get(condition.likelihood, 0.3),
                     supporting_findings=condition.supporting_symptoms + vision.findings[:2],
-                    against_findings=[],
+                    against_findings=self._build_against_findings(condition),
                     clinical_rationale=(
                         "Added from high-likelihood RAG evidence to preserve clinically "
                         "salient differential coverage."
@@ -189,6 +203,7 @@ class ReportAgent:
     def _build_differential_diagnosis(self, rag: RAGContext, vision: VisionFindings) -> list[DifferentialDiagnosis]:
         diagnoses: list[DifferentialDiagnosis] = []
         for rank, condition in enumerate(rag.relevant_conditions, start=1):
+            against_findings = self._build_against_findings(condition)
             diagnoses.append(
                 DifferentialDiagnosis(
                     rank=rank,
@@ -196,7 +211,7 @@ class ReportAgent:
                     icd_10_code=ICD10_MAP.get(condition.condition, "R69"),
                     confidence_score=LIKELIHOOD_TO_SCORE.get(condition.likelihood, 0.3),
                     supporting_findings=condition.supporting_symptoms + vision.findings[:2],
-                    against_findings=[],
+                    against_findings=against_findings,
                     clinical_rationale=(
                         f"Condition ranked from symptom-pattern matching and retrieval evidence. "
                         f"Vision severity hint: {vision.severity_hint}."
@@ -204,6 +219,14 @@ class ReportAgent:
                 )
             )
         return diagnoses
+
+    @staticmethod
+    def _build_against_findings(condition: RelevantCondition) -> list[str]:
+        if condition.likelihood == "high":
+            return ["No strong contradictory evidence identified in the currently provided inputs."]
+        if condition.likelihood == "moderate":
+            return ["Pattern fit is partial; confirm with focused exam, vitals, and targeted testing."]
+        return ["Limited high-specificity supporting evidence; treat as lower-priority until further data arrives."]
 
     def _patient_summary(self, symptoms: str, vision: VisionFindings, rag: RAGContext) -> str:
         image_summary = ", ".join(vision.findings[:2]) if vision.findings else "no confirmed imaging findings yet"
@@ -227,14 +250,25 @@ class ReportAgent:
             red_flags.append("High-risk symptom detected in input; escalate for clinician assessment.")
         if "critical" in vision.severity_hint.lower():
             red_flags.append("Vision analysis flagged critical severity.")
-        return red_flags
+        return red_flags or [
+            "No immediate high-risk red flags identified from current inputs; continue monitoring and fill missing data."
+        ]
 
     @staticmethod
     def _estimate_urgency(red_flags: list[str]) -> str:
+        actionable_flags = [
+            flag
+            for flag in red_flags
+            if not flag.startswith("No immediate high-risk red flags identified")
+        ]
+        if len(actionable_flags) >= 2:
+            return "immediate"
+        if len(actionable_flags) == 1:
+            return "urgent"
         if len(red_flags) >= 2:
             return "immediate"
         if len(red_flags) == 1:
-            return "urgent"
+            return "semi_urgent"
         return "semi_urgent"
 
     @staticmethod
@@ -329,3 +363,87 @@ class ReportAgent:
                 deduped_steps.append(step)
 
         return deduped_steps[:8]
+
+    @staticmethod
+    def _apply_urgency_guardrails(
+        current_urgency: str,
+        patient_symptoms: str,
+        red_flags: list[str],
+        diagnoses: list[DifferentialDiagnosis],
+    ) -> str:
+        order = {
+            "routine": 0,
+            "non_urgent": 0,
+            "semi_urgent": 1,
+            "urgent": 2,
+            "immediate": 3,
+        }
+        reverse = {v: k for k, v in order.items()}
+
+        symptom_blob = patient_symptoms.lower()
+        red_flag_blob = " ".join(red_flags).lower()
+        top_conditions = [item.condition.lower() for item in diagnoses[:3]]
+
+        level = order.get((current_urgency or "semi_urgent").lower(), 1)
+
+        dka_markers = [
+            "type 1 diabetes",
+            "ketones",
+            "anion gap",
+            "bicarbonate",
+            "fruity breath",
+            "confusion",
+            "altered mental",
+            "ph 7.",
+            "deep labored breathing",
+        ]
+        if sum(1 for marker in dka_markers if marker in symptom_blob) >= 3:
+            level = max(level, order["immediate"])
+
+        skin_evolution_markers = [
+            "pigmented lesion",
+            "asymmetry",
+            "irregular",
+            "variegated",
+            "diameter over 6",
+            "rapid evolution",
+            "grew from",
+        ]
+        if ("melanoma" in " ".join(top_conditions)) and sum(
+            1 for marker in skin_evolution_markers if marker in symptom_blob
+        ) >= 2:
+            level = max(level, order["urgent"])
+
+        low_acuity_markers = [
+            "annual preventive check",
+            "hba1c",
+            "ldl",
+            "triglycerides",
+        ]
+        severe_exclusions = [
+            "shortness of breath",
+            "spo2",
+            "hemoptysis",
+            "confusion",
+            "altered mental",
+            "d-dimer",
+            "troponin",
+            "sepsis",
+            "ketones",
+            "anion gap",
+        ]
+        explicit_low_risk_context = (
+            "annual preventive check" in symptom_blob
+            and "no chest pain" in symptom_blob
+            and ("no dyspnea" in symptom_blob or "or dyspnea" in symptom_blob)
+        )
+        if explicit_low_risk_context and not any(marker in symptom_blob for marker in severe_exclusions):
+            level = min(level, order["semi_urgent"])
+        elif (
+            sum(1 for marker in low_acuity_markers if marker in symptom_blob) >= 3
+            and not any(marker in symptom_blob for marker in severe_exclusions)
+            and not any(term in red_flag_blob for term in ["high-risk", "immediate", "critical"])
+        ):
+            level = min(level, order["semi_urgent"])
+
+        return reverse[level]

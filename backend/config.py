@@ -21,7 +21,7 @@ class Settings:
     api_prefix: str = "/api"
     ollama_base_url: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     ollama_model: str = os.getenv("OLLAMA_MODEL", "llama3.1:8b")
-    vision_model: str = os.getenv("VISION_MODEL", "llava:13b")
+    vision_model: str = os.getenv("VISION_MODEL", "llava:7b")
     chromadb_path: str = os.getenv("CHROMADB_PATH", "./data/chromadb")
     pubmed_api_key: str | None = os.getenv("PUBMED_API_KEY") or None
     langsmith_api_key: str | None = os.getenv("LANGSMITH_API_KEY") or None

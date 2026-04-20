@@ -11,3 +11,4 @@ This folder contains project documentation, planning files, prompts, and progres
 - `STITCH.md` - Stitch generation prompt/spec
 - `DATASETS.md` - Dataset download and layout guide
 - `progress.md` - Execution log and benchmark/progress updates
+- `PROJECT_MEMORY.md` - One-page visual memory of the repo and runtime flow

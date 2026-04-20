@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import random
 import sys
@@ -24,38 +25,12 @@ from backend.training.ham10000_dataset import (
     load_ham10000_records,
     split_records,
 )
+from backend.training.ham10000_model import Ham10000BaselineCNN
 from backend.utils.data_paths import canonical_ham10000_dir
 
 
 DEFAULT_DATASET_DIR = canonical_ham10000_dir()
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "data" / "processed" / "models" / "ham10000_baseline"
-
-
-class Ham10000BaselineCNN(nn.Module):
-    def __init__(self, num_classes: int = len(HAM10000_CLASSES)) -> None:
-        super().__init__()
-        self.features = nn.Sequential(
-            nn.Conv2d(3, 16, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Conv2d(16, 32, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Conv2d(32, 64, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.AdaptiveAvgPool2d((4, 4)),
-        )
-        self.classifier = nn.Sequential(
-            nn.Flatten(),
-            nn.Linear(64 * 4 * 4, 256),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-            nn.Linear(256, num_classes),
-        )
-
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
-        return self.classifier(self.features(inputs))
 
 
 def set_seed(seed: int) -> None:
@@ -117,6 +92,10 @@ def _evaluate_predictions(model: nn.Module, loader: DataLoader, device: torch.de
     class_tp = Counter()
     class_total = Counter()
     class_pred = Counter()
+    confusion_matrix = [
+        [0 for _ in HAM10000_CLASSES]
+        for _ in HAM10000_CLASSES
+    ]
 
     with torch.no_grad():
         for inputs, labels in loader:
@@ -131,34 +110,47 @@ def _evaluate_predictions(model: nn.Module, loader: DataLoader, device: torch.de
             for label, pred in zip(labels.tolist(), preds.tolist()):
                 class_total[label] += 1
                 class_pred[pred] += 1
+                confusion_matrix[label][pred] += 1
                 if label == pred:
                     class_tp[label] += 1
 
     per_class: dict[str, dict[str, float | int]] = {}
     balanced_acc_components: list[float] = []
+    macro_f1_components: list[float] = []
     for class_index, class_name in enumerate(HAM10000_CLASSES):
         total_for_class = class_total[class_index]
         predicted_for_class = class_pred[class_index]
         true_positive = class_tp[class_index]
         recall = (true_positive / total_for_class) if total_for_class else 0.0
         precision = (true_positive / predicted_for_class) if predicted_for_class else 0.0
+        f1 = (2 * precision * recall / (precision + recall)) if (precision + recall) else 0.0
         per_class[class_name] = {
             "support": total_for_class,
             "precision": round(precision, 4),
             "recall": round(recall, 4),
+            "f1": round(f1, 4),
         }
         if total_for_class:
             balanced_acc_components.append(recall)
+            macro_f1_components.append(f1)
 
     balanced_accuracy = (
         sum(balanced_acc_components) / len(balanced_acc_components)
         if balanced_acc_components
         else 0.0
     )
+    macro_f1 = (
+        sum(macro_f1_components) / len(macro_f1_components)
+        if macro_f1_components
+        else 0.0
+    )
     return {
         "accuracy": round((correct / total) if total else 0.0, 4),
         "balanced_accuracy": round(balanced_accuracy, 4),
+        "macro_f1": round(macro_f1, 4),
         "per_class": per_class,
+        "confusion_matrix": confusion_matrix,
+        "confusion_matrix_labels": HAM10000_CLASSES,
     }
 
 
@@ -195,7 +187,9 @@ def train(
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     history: list[dict] = []
-    best_val_accuracy = -1.0
+    best_val_balanced_accuracy = -1.0
+    best_epoch = 0
+    best_state_dict: dict[str, torch.Tensor] | None = None
     for epoch in range(1, epochs + 1):
         model.train()
         running_loss = 0.0
@@ -216,16 +210,23 @@ def train(
         train_loss = (running_loss / sample_count) if sample_count else 0.0
         val_metrics = _evaluate_predictions(model, val_loader, device)
         val_accuracy = float(val_metrics["accuracy"])
+        val_balanced_accuracy = float(val_metrics["balanced_accuracy"])
         history.append(
             {
                 "epoch": epoch,
                 "train_loss": round(train_loss, 4),
                 "val_accuracy": round(val_accuracy, 4),
                 "val_balanced_accuracy": val_metrics["balanced_accuracy"],
+                "val_macro_f1": val_metrics["macro_f1"],
             }
         )
-        if val_accuracy > best_val_accuracy:
-            best_val_accuracy = val_accuracy
+        if val_balanced_accuracy > best_val_balanced_accuracy:
+            best_val_balanced_accuracy = val_balanced_accuracy
+            best_epoch = epoch
+            best_state_dict = copy.deepcopy(model.state_dict())
+
+    if best_state_dict is not None:
+        model.load_state_dict(best_state_dict)
 
     test_metrics = _evaluate_predictions(model, test_loader, device)
 
@@ -265,10 +266,14 @@ def train(
             for index, weight in enumerate(class_weights.detach().cpu().tolist())
         },
         "history": history,
-        "best_validation_accuracy": round(best_val_accuracy, 4),
+        "best_validation_balanced_accuracy": round(best_val_balanced_accuracy, 4),
+        "best_validation_epoch": best_epoch,
         "test_accuracy": test_metrics["accuracy"],
         "test_balanced_accuracy": test_metrics["balanced_accuracy"],
+        "test_macro_f1": test_metrics["macro_f1"],
         "test_per_class": test_metrics["per_class"],
+        "test_confusion_matrix": test_metrics["confusion_matrix"],
+        "test_confusion_matrix_labels": test_metrics["confusion_matrix_labels"],
         "model_path": str(model_path),
     }
     metrics_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")

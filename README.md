@@ -226,7 +226,7 @@ Common settings:
 
 - `OLLAMA_BASE_URL` (default `http://localhost:11434`)
 - `OLLAMA_MODEL` (default `llama3.1:8b`)
-- `VISION_MODEL` (default `llava:13b`)
+- `VISION_MODEL` (default `llava:7b`)
 - `CHROMADB_PATH` (default `./data/chromadb`)
 - `CORS_ORIGINS`
 - `LOG_LEVEL`

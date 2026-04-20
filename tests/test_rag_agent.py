@@ -31,3 +31,13 @@ def test_rag_agent_prioritizes_pulmonary_embolism_for_pleuritic_pattern() -> Non
     assert result.relevant_conditions
     assert result.relevant_conditions[0].condition == "Pulmonary Embolism"
     assert result.relevant_conditions[0].likelihood == "high"
+
+
+def test_rag_agent_always_surfaces_missing_information() -> None:
+    agent = RAGAgent()
+    result = agent.analyze(
+        "adult with 3 day history of cough and oxygen saturation 96%",
+        VisionFindings(),
+    )
+
+    assert result.missing_information

@@ -35,9 +35,10 @@ class RAGAgent:
             document_context,
         )
         chroma_hits = self._retrieve_chroma_context(query_text)
+        guideline_hits, guideline_sources = self._retrieve_guideline_context(query_text)
         pubmed_articles = self._retrieve_pubmed_context(query_text)
-        evidence = self._merge_evidence(local_evidence, chroma_hits, pubmed_articles, document_context)
-        sources = self._build_sources(local_sources, chroma_hits, pubmed_articles)
+        evidence = self._merge_evidence(local_evidence, chroma_hits, guideline_hits, pubmed_articles, document_context)
+        sources = self._build_sources(local_sources, chroma_hits, guideline_sources, pubmed_articles)
 
         return RAGContext(
             relevant_conditions=ranked_conditions,
@@ -85,6 +86,35 @@ class RAGAgent:
             return [doc for doc in documents[0] if doc]
         except Exception:
             return []
+
+    def _retrieve_guideline_context(self, query_text: str) -> tuple[list[str], list[SourceReference]]:
+        if not query_text.strip():
+            return [], []
+
+        try:
+            query_embedding = self.embedder.embed_texts([query_text])[0]
+            result = query_collection("medical_guidelines", query_embedding, n_results=4)
+
+            documents = result.get("documents", [[]])
+            metadatas = result.get("metadatas", [[]])
+            docs = [doc for doc in documents[0] if doc]
+            metas = metadatas[0] if metadatas and metadatas[0] else []
+
+            evidence: list[str] = []
+            sources: list[SourceReference] = []
+            for index, doc in enumerate(docs):
+                metadata = metas[index] if index < len(metas) and isinstance(metas[index], dict) else {}
+                title = str(metadata.get("title") or metadata.get("filename") or f"Guideline chunk {index + 1}")
+                url = str(metadata.get("path")) if metadata.get("path") else None
+                org = str(metadata.get("org")) if metadata.get("org") else None
+
+                prefix = f"[{org}] " if org and org != "other" else ""
+                evidence.append(f"{prefix}{title}: {doc}")
+                sources.append(SourceReference(title=title, pmid=None, url=url))
+
+            return evidence, sources
+        except Exception:
+            return [], []
 
     def _retrieve_pubmed_context(self, query_text: str) -> list[PubMedArticle]:
         try:
@@ -165,6 +195,7 @@ class RAGAgent:
         self,
         local_hits: list[str],
         chroma_hits: list[str],
+        guideline_hits: list[str],
         pubmed_articles: list[PubMedArticle],
         document_context: str,
     ) -> list[str]:
@@ -176,6 +207,8 @@ class RAGAgent:
             merged[hit.strip()] = None
         for hit in chroma_hits:
             merged[hit.strip()] = None
+        for hit in guideline_hits:
+            merged[hit.strip()] = None
         for article in pubmed_articles:
             snippet = f"{article.title}: {article.abstract}".strip(": ")
             merged[snippet] = None
@@ -185,11 +218,13 @@ class RAGAgent:
         self,
         local_sources: list[SourceReference],
         chroma_hits: list[str],
+        guideline_sources: list[SourceReference],
         pubmed_articles: list[PubMedArticle],
     ) -> list[SourceReference]:
         sources: list[SourceReference] = list(local_sources)
         for index, _ in enumerate(chroma_hits):
             sources.append(SourceReference(title=f"ChromaDB chunk {index + 1}", pmid=None, url=None))
+        sources.extend(guideline_sources)
         for article in pubmed_articles:
             sources.append(SourceReference(title=article.title, pmid=article.pmid, url=article.url))
         return sources
@@ -225,4 +260,4 @@ class RAGAgent:
             missing.append("Oxygen saturation")
         if "age" not in lower and "child" not in lower and "adult" not in lower:
             missing.append("Patient age")
-        return missing
+        return missing or ["No major history gaps detected by the baseline checklist."]

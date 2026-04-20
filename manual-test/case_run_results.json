@@ -1,0 +1,310 @@
+[
+  {
+    "id": 1,
+    "name": "Skin Lesion + Sepsis Guideline Context",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "dac51c4d94cd40f586c6d5c3660ed26b",
+    "estimated_urgency": "urgent",
+    "top_dx": "Sepsis",
+    "summary": "Patient symptoms: Patient has fever for 3 days, tachycardia, fatigue, reduced appetite, and worsening weakness. Family reports child appears less responsive today.. Imaging summary: HAM10000 classifier suggests lesion class: nv.. Top evidence-backed consideration: Sepsis.",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "dx_non_empty",
+        "ok": true
+      },
+      {
+        "check": "red_flags_escalation",
+        "ok": true
+      },
+      {
+        "check": "next_steps_non_empty",
+        "ok": true
+      },
+      {
+        "check": "has_disclaimer",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Skin Lesion + Pneumonia Guideline Context",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "fecc72067a58439c9e829760280252a2",
+    "estimated_urgency": "semi_urgent",
+    "top_dx": "Community-Acquired Pneumonia",
+    "summary": "Patient symptoms: Adult with persistent cough, mild fever, chest discomfort while breathing, and shortness of breath for 5 days. No known chronic lung disease.. Imaging summary: HAM10000 classifier suggests lesion class: nv.. Top evidence-backed consideration: Community-Acquired Pneumonia.",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "structured_report",
+        "ok": true
+      },
+      {
+        "check": "respiratory_context",
+        "ok": true
+      },
+      {
+        "check": "exports_work",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Text + PDF Only",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "8811d4bc20f1426e80e9e86ee847c170",
+    "estimated_urgency": "urgent",
+    "top_dx": "Acute Coronary Syndrome",
+    "summary": "Patient symptoms: New-onset chest pain for 2 hours, pressure-like sensation radiating to left arm, mild sweating, and nausea.. Imaging summary: no confirmed imaging findings yet. Top evidence-backed consideration: Acute Coronary Syndrome.",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "dx_non_empty",
+        "ok": true
+      },
+      {
+        "check": "cardiac_context",
+        "ok": true
+      },
+      {
+        "check": "red_flags_escalation",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Text Only Quick Validation",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "033d7d4a19db493eaf800e9741a024f7",
+    "estimated_urgency": "semi_urgent",
+    "top_dx": "Viral Upper Respiratory Infection",
+    "summary": "Patient symptoms: Fever, sore throat, dry cough, body ache for 2 days. No severe breathlessness.. Imaging summary: no confirmed imaging findings yet. Top evidence-backed consideration: Viral Upper Respiratory Infection.",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "dx_non_empty",
+        "ok": true
+      },
+      {
+        "check": "urgency_not_immediate",
+        "ok": true
+      },
+      {
+        "check": "records_access",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "RSNA Chest X-ray Specialist Route",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "ff6baeba0c32405d811da2a5dd9ab540",
+    "estimated_urgency": "urgent",
+    "top_dx": "Community-Acquired Pneumonia",
+    "summary": "Patient symptoms: Fever, productive cough, right-sided pleuritic chest pain, and breathlessness for 4 days.. Imaging summary: CXR classifier top finding: pneumonia. Top evidence-backed consideration: Community-Acquired Pneumonia.",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "chest_vision_style",
+        "ok": true
+      },
+      {
+        "check": "respiratory_context",
+        "ok": true
+      },
+      {
+        "check": "chest_next_steps",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "ISIC Skin Specialist Route",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "5cad8aa5804841f9b2c515e00aff7d48",
+    "estimated_urgency": "semi_urgent",
+    "top_dx": "Melanoma",
+    "summary": "Patient symptoms: Pigmented skin lesion with recent change in color and mild itching over 2 months.. Imaging summary: HAM10000 classifier suggests lesion class: nv.. Top evidence-backed consideration: Melanoma.",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "skin_vision_style",
+        "ok": true
+      },
+      {
+        "check": "structured_report",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Synthetic CAP (Report A)",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "3d861a6cbad14a689a9f09cad5df4a46",
+    "estimated_urgency": "immediate",
+    "top_dx": "Community-Acquired Pneumonia",
+    "summary": "Patient symptoms: 52-year-old male presenting with 5 days of high-grade fever reaching 39.8C, productive cough with yellow-green sputum, right-sided pleuritic chest pain worsening on deep inspiration, SpO2 93% on room air, WBC 18400, neutrophils 85%, CRP 142, procalcitonin 1.8, sodium 131, albumin 2.9.. Imaging summary: CXR classifier top finding: pneumonia. Top evidence-backed consideration: Community-Acquired Pneumonia.",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "cap_top_context",
+        "ok": true
+      },
+      {
+        "check": "resp_red_flags",
+        "ok": true
+      },
+      {
+        "check": "urgency_high",
+        "ok": true
+      },
+      {
+        "check": "chest_next_steps",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "Synthetic DKA (Report B)",
+    "status": "fail",
+    "http_status": 200,
+    "session_id": "3e835463d9a043679705f0fd134f1644",
+    "estimated_urgency": "semi_urgent",
+    "top_dx": "Sepsis",
+    "summary": "Patient symptoms: 28-year-old female with Type 1 diabetes, 18 hours of nausea, vomiting, diffuse abdominal pain, progressive confusion, fruity breath, heart rate 118, blood pressure 100/60, respiratory rate 28 with deep labored breathing, glucose 487, arterial pH 7.18, bicarbonate 8, anion gap 28, ketones strongly positive, potassium 6.1, sodium 128.. Imaging summary: no confirmed imaging findings yet. Top evidence-backed consideration: Sepsis.",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "urgency_immediate",
+        "ok": false
+      },
+      {
+        "check": "red_flags_escalation",
+        "ok": true
+      },
+      {
+        "check": "emergency_steps",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": "Synthetic Pulmonary Embolism (Report C)",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "2bbf99bf5ffa49ce844be02db0582e44",
+    "estimated_urgency": "immediate",
+    "top_dx": "Pulmonary Embolism",
+    "summary": "Patient symptoms: 44-year-old male 10 days post knee arthroscopy with sudden dyspnea, pleuritic chest pain, mild hemoptysis, swollen tender right calf, heart rate 110, SpO2 91%, recent long-haul flight, D-dimer 4800, troponin 0.08, NT-proBNP 620, pO2 68.. Imaging summary: no confirmed imaging findings yet. Top evidence-backed consideration: Pulmonary Embolism.",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "pe_near_top",
+        "ok": true
+      },
+      {
+        "check": "resp_red_flags",
+        "ok": true
+      },
+      {
+        "check": "urgency_immediate",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "name": "Synthetic Routine Lipid Panel (Report D)",
+    "status": "fail",
+    "http_status": 200,
+    "session_id": "4f10458eba4c44b0b4e337316e573ff4",
+    "estimated_urgency": "urgent",
+    "top_dx": "Acute Coronary Syndrome",
+    "summary": "Patient symptoms: 38-year-old female for annual preventive check, no chest pain or dyspnea, BP 118/76, total cholesterol 228, LDL 148, HDL 52, triglycerides 182, fasting glucose 98, HbA1c 5.6, TSH 2.1.. Imaging summary: no confirmed imaging findings yet. Top evidence-backed consideration: Acute Coronary Syndrome.",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "structured_report",
+        "ok": true
+      },
+      {
+        "check": "urgency_low",
+        "ok": false
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "name": "Synthetic Skin Lesion ABCDE (Report E)",
+    "status": "fail",
+    "http_status": 200,
+    "session_id": "57cd97598b0346189b67c25ed41b64e2",
+    "estimated_urgency": "semi_urgent",
+    "top_dx": "Melanoma",
+    "summary": "Patient symptoms: 55-year-old male outdoor worker with changing pigmented lesion on left forearm, grew from 4mm to 8mm over 3 months, asymmetry present, irregular scalloped border, variegated color, diameter over 6mm, rapid evolution.. Imaging summary: HAM10000 classifier suggests lesion class: nv.. Top evidence-backed consideration: Melanoma.",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "skin_vision_style",
+        "ok": true
+      },
+      {
+        "check": "melanoma_context",
+        "ok": true
+      },
+      {
+        "check": "urgency_high",
+        "ok": false
+      }
+    ]
+  }
+]

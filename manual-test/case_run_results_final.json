@@ -1,0 +1,291 @@
+[
+  {
+    "id": 1,
+    "name": "Skin Lesion + Sepsis",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "f662deb14845428696b0d5ae5605d363",
+    "estimated_urgency": "urgent",
+    "top_dx": "Sepsis",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "dx_non_empty",
+        "ok": true
+      },
+      {
+        "check": "red_flags_escalation",
+        "ok": true
+      },
+      {
+        "check": "next_steps_non_empty",
+        "ok": true
+      },
+      {
+        "check": "has_disclaimer",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": "Skin + Pneumonia Guideline",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "bbb8f92fd7f745609de66990b48482bd",
+    "estimated_urgency": "semi_urgent",
+    "top_dx": "Community-Acquired Pneumonia",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "structured_report",
+        "ok": true
+      },
+      {
+        "check": "respiratory_context",
+        "ok": true
+      },
+      {
+        "check": "exports_work",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": "Text+PDF",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "9b1038ff087c49c1891a10a6607c233a",
+    "estimated_urgency": "urgent",
+    "top_dx": "Acute Coronary Syndrome",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "dx_non_empty",
+        "ok": true
+      },
+      {
+        "check": "cardiac_context",
+        "ok": true
+      },
+      {
+        "check": "red_flags_escalation",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": "Text Only",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "898b4f2d152240219d3eed8c397bde82",
+    "estimated_urgency": "semi_urgent",
+    "top_dx": "Viral Upper Respiratory Infection",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "dx_non_empty",
+        "ok": true
+      },
+      {
+        "check": "urgency_not_immediate",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": "RSNA Chest Route",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "26e38afacdc24a9d8540d2483ccbf6ec",
+    "estimated_urgency": "urgent",
+    "top_dx": "Community-Acquired Pneumonia",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "chest_vision_style",
+        "ok": true
+      },
+      {
+        "check": "respiratory_context",
+        "ok": true
+      },
+      {
+        "check": "chest_next_steps",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": "ISIC Skin Route",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "6449140e47d844fd9fc0ce51d25e9739",
+    "estimated_urgency": "semi_urgent",
+    "top_dx": "Melanoma",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "skin_vision_style",
+        "ok": true
+      },
+      {
+        "check": "structured_report",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": "Synthetic CAP",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "495f19fad38d4a10bef3211ff2e07345",
+    "estimated_urgency": "immediate",
+    "top_dx": "Community-Acquired Pneumonia",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "cap_top_context",
+        "ok": true
+      },
+      {
+        "check": "resp_red_flags",
+        "ok": true
+      },
+      {
+        "check": "urgency_high",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": "Synthetic DKA",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "cf4a5f859ab3402b990299c0352d5664",
+    "estimated_urgency": "immediate",
+    "top_dx": "Sepsis",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "urgency_immediate",
+        "ok": true
+      },
+      {
+        "check": "red_flags_escalation",
+        "ok": true
+      },
+      {
+        "check": "emergency_steps",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": "Synthetic PE",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "5238eba85cab4a9797cbf70c86981f58",
+    "estimated_urgency": "immediate",
+    "top_dx": "Pulmonary Embolism",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "pe_near_top",
+        "ok": true
+      },
+      {
+        "check": "resp_red_flags",
+        "ok": true
+      },
+      {
+        "check": "urgency_immediate",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "name": "Routine Lipids",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "09343e1e56c345dbb56e189bb4415aae",
+    "estimated_urgency": "semi_urgent",
+    "top_dx": "Acute Coronary Syndrome",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "structured_report",
+        "ok": true
+      },
+      {
+        "check": "urgency_low",
+        "ok": true
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "name": "Skin ABCDE",
+    "status": "pass",
+    "http_status": 200,
+    "session_id": "764d8b6594634a32bea484d698debd15",
+    "estimated_urgency": "urgent",
+    "top_dx": "Melanoma",
+    "checks": [
+      {
+        "check": "has_session",
+        "ok": true
+      },
+      {
+        "check": "skin_vision_style",
+        "ok": true
+      },
+      {
+        "check": "melanoma_context",
+        "ok": true
+      },
+      {
+        "check": "urgency_high",
+        "ok": true
+      }
+    ]
+  }
+]

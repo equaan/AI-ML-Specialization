@@ -30,6 +30,7 @@ def test_report_agent_returns_disclaimer_and_icd_code() -> None:
 
     assert report.disclaimer == DISCLAIMER_TEXT
     assert report.differential_diagnosis[0].icd_10_code == "J18.9"
+    assert report.differential_diagnosis[0].against_findings
 
 
 def test_report_agent_escalates_red_flags() -> None:
@@ -92,3 +93,16 @@ def test_report_agent_generates_condition_specific_next_steps() -> None:
     assert "ct pulmonary angiography" in steps_blob
     assert "d-dimer" in steps_blob
     assert "ecg" in steps_blob
+
+
+def test_report_agent_always_surfaces_red_flags_section() -> None:
+    agent = ReportAgent(llm=None)
+    report = agent.generate(
+        "mild headache",
+        VisionFindings(),
+        RAGContext(),
+    )
+
+    assert report.red_flags
+    assert report.red_flags[0].lower().startswith("no immediate high-risk red flags")
+    assert report.estimated_urgency == "semi_urgent"

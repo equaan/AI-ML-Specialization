@@ -111,9 +111,14 @@ if (-not (Test-Path $pythonExe)) {
   throw "python not found at '$pythonExe'. Create venv and install backend requirements first."
 }
 
-$serveFrontendFromBackend = Test-Path $frontendDistIndex
-if (-not $serveFrontendFromBackend -and -not (Get-Command npm -ErrorAction SilentlyContinue)) {
-  throw "npm is not available in this shell and no built frontend was found. Install Node.js or build the frontend first."
+$serveFrontendFromBackend = $false
+if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+  if (Test-Path $frontendDistIndex) {
+    Write-Warning "npm is not available; falling back to serving built frontend from backend."
+    $serveFrontendFromBackend = $true
+  } else {
+    throw "npm is not available in this shell and no built frontend was found. Install Node.js or build the frontend first."
+  }
 }
 
 $ngrokExe = $null
@@ -208,7 +213,12 @@ if (-not (Get-Process -Id $ngrokProc.Id -ErrorAction SilentlyContinue)) {
 Write-Output "Waiting for ngrok tunnel..."
 $tunnelInfo = Get-NgrokTunnelInfo -TimeoutSeconds 90 -LogPath $ngrokStdout
 if (-not $tunnelInfo) {
-  throw "ngrok tunnel URL was not detected from inspect API ports (4040-4100) or ngrok runtime logs."
+  Write-Warning "ngrok tunnel URL was not detected from inspect API ports (4040-4100) or ngrok runtime logs. Local stack is still up."
+  Write-Output "Started ollama, backend, and frontend in separate PowerShell windows."
+  Write-Output "Open $localAppUrl on this PC."
+  Write-Output "ngrok may still initialize shortly. Inspect logs: $ngrokStdout and $ngrokStderr"
+  Write-Output "If tunnel is needed, check inspector manually: http://127.0.0.1:4040/api/tunnels"
+  return
 }
 
 $publicUrl = $tunnelInfo.PublicUrl
