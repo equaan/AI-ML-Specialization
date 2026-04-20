@@ -63,3 +63,32 @@ def test_report_agent_maps_icd_for_pulmonary_embolism() -> None:
 
     assert report.differential_diagnosis[0].condition == "Pulmonary Embolism"
     assert report.differential_diagnosis[0].icd_10_code == "I26.99"
+
+
+def test_report_agent_generates_condition_specific_next_steps() -> None:
+    agent = ReportAgent(llm=None)
+    report = agent.generate(
+        "sudden shortness of breath with pleuritic chest pain and tachycardia; d-dimer elevated",
+        VisionFindings(),
+        RAGContext(
+            relevant_conditions=[
+                RelevantCondition(
+                    condition="Pulmonary Embolism",
+                    likelihood="high",
+                    supporting_symptoms=["pleuritic chest pain", "tachycardia", "d-dimer"],
+                    supporting_evidence_indices=[0],
+                ),
+                RelevantCondition(
+                    condition="Pneumonia with Pleurisy",
+                    likelihood="low",
+                    supporting_symptoms=["pleuritic", "cough"],
+                    supporting_evidence_indices=[1],
+                ),
+            ]
+        ),
+    )
+
+    steps_blob = " ".join(report.recommended_next_steps).lower()
+    assert "ct pulmonary angiography" in steps_blob
+    assert "d-dimer" in steps_blob
+    assert "ecg" in steps_blob

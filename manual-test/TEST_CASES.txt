@@ -1,0 +1,127 @@
+MediAgent Manual Test Cases
+
+Purpose:
+Use these cases to validate the end-to-end app behavior with real assets from this repository.
+
+Where to run:
+1) Open the app UI.
+2) Go to New Analysis.
+3) For each case, use the exact suggested input.
+4) After run, verify Results, Evidence, Lab Report, and Records pages.
+
+Important:
+- data/raw/mimic_cxr is empty in this workspace, so no chest X-ray image is included yet.
+- The image cases below use HAM10000 skin lesion images currently available.
+
+==================================================
+TEST CASE 1 - Skin Lesion + Sepsis Guideline Context
+==================================================
+Goal:
+Validate multimodal run with both image + PDF + symptoms.
+
+Image to upload:
+manual-test/images/ham10000/ISIC_0024315.jpg
+
+PDF report to upload:
+manual-test/reports/guidelines/suspected-sepsis-in-under-16s-recognition-diagnosis-and-early-management-pdf-66144017065669.pdf
+
+Text to enter in symptom box:
+"Patient has fever for 3 days, tachycardia, fatigue, reduced appetite, and worsening weakness. Family reports child appears less responsive today."
+
+Expected result:
+- Analysis succeeds with a session ID.
+- Differential diagnosis list is not empty.
+- Red flags include urgency/critical warning style language.
+- Recommended next steps are actionable (tests/referral/monitoring items).
+- Disclaimer appears at the end of the report.
+- Records page includes this run after completion.
+
+==================================================
+TEST CASE 2 - Skin Lesion + Pneumonia Guideline Context
+==================================================
+Goal:
+Validate that unrelated image/report combinations still produce stable structured output.
+
+Image to upload:
+manual-test/images/ham10000/ISIC_0024322.jpg
+
+PDF report to upload:
+manual-test/reports/guidelines/pneumonia-diagnosis-and-management-pdf-66144010347205.pdf
+
+Text to enter in symptom box:
+"Adult with persistent cough, mild fever, chest discomfort while breathing, and shortness of breath for 5 days. No known chronic lung disease."
+
+Expected result:
+- Analysis succeeds without backend error.
+- Output remains structured (summary, differential, red flags, next steps, disclaimer).
+- At least one respiratory-related condition should appear in differential context.
+- Export buttons for JSON/Markdown/PDF are enabled for the session.
+
+==================================================
+TEST CASE 3 - Text + PDF Only (No Image)
+==================================================
+Goal:
+Validate conditional pipeline path when image is omitted.
+
+Image to upload:
+None
+
+PDF report to upload:
+manual-test/reports/guidelines/recentonset-chest-pain-of-suspected-cardiac-origin-assessment-and-diagnosis-pdf-975751034821.pdf
+
+Text to enter in symptom box:
+"New-onset chest pain for 2 hours, pressure-like sensation radiating to left arm, mild sweating, and nausea."
+
+Expected result:
+- Analysis succeeds even without image upload.
+- No crash in vision-related sections.
+- Differential diagnosis includes cardiac-risk possibilities.
+- Red flags indicate urgency escalation language.
+- Lab/Evidence pages still render and do not show broken placeholders.
+
+==================================================
+TEST CASE 4 - Text Only Quick Validation
+==================================================
+Goal:
+Validate minimum valid input and speed of baseline flow.
+
+Image to upload:
+None
+
+PDF report to upload:
+None
+
+Text to enter in symptom box:
+"Fever, sore throat, dry cough, body ache for 2 days. No severe breathlessness."
+
+Expected result:
+- Analysis succeeds from text-only input.
+- Differential diagnosis still returns ranked entries with confidence scores.
+- Estimated urgency should likely be non-immediate for this symptom profile.
+- Session appears in Records and persists after page refresh.
+
+==================================================
+POST-RUN CHECKLIST (Apply after any case)
+==================================================
+1) Refresh browser page.
+   Expected: Latest report still available (persistent history loaded).
+
+2) Open Records page and click an older session.
+   Expected: Selected session loads back into current report view.
+
+3) Try export actions.
+   Expected: JSON, Markdown, and PDF export endpoints respond for that session.
+
+4) Check backend health endpoint.
+   Expected: /api/health returns valid JSON response (ok or degraded, but not server error).
+
+==================================================
+OPTIONAL FUTURE CASE (When X-ray files become available)
+==================================================
+If you later add chest X-ray files to data/raw/mimic_cxr, create:
+manual-test/images/xray/
+and add a case combining:
+- xray image
+- chest pain guideline PDF
+- chest-pain symptom text
+for stronger respiratory/cardiac multimodal validation.

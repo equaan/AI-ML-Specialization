@@ -66,83 +66,120 @@ class RAGAgent:
 
     def _infer_conditions(self, symptoms: str, vision: VisionFindings) -> list[RelevantCondition]:
         symptom_blob = f"{symptoms} {' '.join(vision.findings)} {' '.join(vision.anomalies)}".lower()
-        rules = [
+        profiles = [
             {
                 "condition": "Pulmonary Embolism",
-                "likelihood": "high",
-                "keywords": [
-                    "pleuritic chest pain",
-                    "pleuritic",
-                    "pleurisy",
-                    "sudden shortness of breath",
-                    "tachycardia",
-                    "hemoptysis",
-                    "d-dimer",
-                    "hypoxia",
-                    "unilateral leg swelling",
-                    "pulmonary embolism",
-                ],
-                "min_matches": 2,
+                "terms": {
+                    "pleuritic chest pain": 3,
+                    "pleuritic": 3,
+                    "pleurisy": 3,
+                    "d-dimer": 3,
+                    "hemoptysis": 3,
+                    "unilateral leg swelling": 3,
+                    "sudden shortness of breath": 2,
+                    "tachycardia": 2,
+                    "hypoxia": 2,
+                    "oxygen saturation drop": 2,
+                    "chest pain": 1,
+                    "shortness of breath": 1,
+                },
+                "minimum_score": 4,
             },
             {
                 "condition": "Community-Acquired Pneumonia",
-                "likelihood": "high",
-                "keywords": ["fever", "cough", "infiltrate", "consolidation", "chest pain"],
-                "min_matches": 2,
-            },
-            {
-                "condition": "COVID-19 Pneumonitis",
-                "likelihood": "moderate",
-                "keywords": ["fever", "cough", "bilateral", "opacity"],
-                "min_matches": 2,
-            },
-            {
-                "condition": "Pulmonary Edema",
-                "likelihood": "moderate",
-                "keywords": ["edema", "cardiomegaly", "breathlessness", "orthopnea"],
-                "min_matches": 2,
-            },
-            {
-                "condition": "Asthma Exacerbation",
-                "likelihood": "moderate",
-                "keywords": ["wheeze", "shortness of breath", "tightness"],
-                "min_matches": 2,
+                "terms": {
+                    "fever": 2,
+                    "cough": 2,
+                    "productive cough": 2,
+                    "infiltrate": 3,
+                    "consolidation": 3,
+                    "opacity": 1,
+                    "chest pain": 1,
+                },
+                "minimum_score": 4,
             },
             {
                 "condition": "Pneumonia with Pleurisy",
-                "likelihood": "low",
-                "keywords": ["pleuritic", "pleurisy", "pleuritic chest pain", "fever", "cough"],
-                "min_matches": 2,
+                "terms": {
+                    "pleuritic chest pain": 3,
+                    "pleuritic": 2,
+                    "pleurisy": 2,
+                    "fever": 1,
+                    "cough": 1,
+                },
+                "minimum_score": 3,
+            },
+            {
+                "condition": "COVID-19 Pneumonitis",
+                "terms": {
+                    "fever": 1,
+                    "cough": 1,
+                    "bilateral": 2,
+                    "ground glass": 3,
+                    "opacity": 1,
+                    "loss of smell": 2,
+                },
+                "minimum_score": 3,
+            },
+            {
+                "condition": "Pulmonary Edema",
+                "terms": {
+                    "orthopnea": 3,
+                    "paroxysmal nocturnal dyspnea": 3,
+                    "cardiomegaly": 2,
+                    "edema": 2,
+                    "breathlessness": 1,
+                },
+                "minimum_score": 3,
+            },
+            {
+                "condition": "Asthma Exacerbation",
+                "terms": {
+                    "wheeze": 3,
+                    "shortness of breath": 2,
+                    "tightness": 2,
+                    "night cough": 2,
+                },
+                "minimum_score": 3,
             },
             {
                 "condition": "Acute Bronchitis",
-                "likelihood": "low",
-                "keywords": ["cough", "sputum", "fever"],
-                "min_matches": 2,
+                "terms": {
+                    "cough": 2,
+                    "sputum": 2,
+                    "fever": 1,
+                    "sore throat": 1,
+                },
+                "minimum_score": 3,
             },
         ]
 
-        likelihood_priority = {"high": 0, "moderate": 1, "low": 2}
+        scored: list[tuple[int, list[str], str]] = []
+        for profile in profiles:
+            matched = [term for term in profile["terms"] if term in symptom_blob]
+            score = sum(profile["terms"][term] for term in matched)
+            if score >= profile["minimum_score"]:
+                scored.append((score, matched, profile["condition"]))
+
+        scored.sort(key=lambda item: item[0], reverse=True)
+
+        def likelihood_from_score(score: int) -> str:
+            if score >= 6:
+                return "high"
+            if score >= 4:
+                return "moderate"
+            return "low"
 
         conditions: list[RelevantCondition] = []
-        for rule in rules:
-            matched = [keyword for keyword in rule["keywords"] if keyword in symptom_blob]
-            if len(matched) >= rule["min_matches"]:
-                conditions.append(
-                    RelevantCondition(
-                        condition=rule["condition"],
-                        likelihood=rule["likelihood"],
-                        supporting_symptoms=matched,
-                        supporting_evidence_indices=list(range(min(len(matched), 3))),
-                    )
+        for score, matched, condition_name in scored[:5]:
+            conditions.append(
+                RelevantCondition(
+                    condition=condition_name,
+                    likelihood=likelihood_from_score(score),
+                    supporting_symptoms=matched,
+                    supporting_evidence_indices=list(range(min(len(matched), 3))),
                 )
-
-        conditions.sort(
-            key=lambda item: (
-                likelihood_priority.get(item.likelihood, 9),
-                -len(item.supporting_symptoms),
             )
-        )
 
         if not conditions:
             conditions.append(

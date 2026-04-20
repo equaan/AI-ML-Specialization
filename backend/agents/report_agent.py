@@ -50,7 +50,13 @@ class ReportAgent:
         rag = self._normalize_rag(rag_context)
         llm_report = self._generate_with_llm(patient_symptoms, vision, rag)
         if llm_report is not None:
-            return self._apply_rag_consistency_overrides(llm_report, rag, vision)
+            reconciled = self._apply_rag_consistency_overrides(llm_report, rag, vision)
+            reconciled.recommended_next_steps = self._recommended_next_steps(
+                reconciled.differential_diagnosis,
+                reconciled.red_flags,
+                patient_symptoms,
+            )
+            return reconciled
         return self._generate_fallback_report(patient_symptoms, vision, rag)
 
     def _apply_rag_consistency_overrides(
@@ -164,7 +170,7 @@ class ReportAgent:
             patient_summary=self._patient_summary(patient_symptoms, vision, rag),
             differential_diagnosis=diagnoses,
             red_flags=red_flags,
-            recommended_next_steps=self._recommended_next_steps(diagnoses, red_flags),
+            recommended_next_steps=self._recommended_next_steps(diagnoses, red_flags, patient_symptoms),
             estimated_urgency=urgency,
             additional_history_needed=rag.missing_information,
             disclaimer=DISCLAIMER_TEXT,
@@ -219,14 +225,62 @@ class ReportAgent:
         return "semi_urgent"
 
     @staticmethod
-    def _recommended_next_steps(diagnoses: list[DifferentialDiagnosis], red_flags: list[str]) -> list[str]:
-        steps = [
-            "Repeat focused clinical examination and vital signs review.",
-            "Correlate with CBC, CRP, and other indicated baseline labs.",
-            "Review imaging with a qualified clinician or radiologist.",
-        ]
-        if diagnoses:
-            steps.append(f"Prioritize workup for {diagnoses[0].condition}.")
+    def _recommended_next_steps(
+        diagnoses: list[DifferentialDiagnosis],
+        red_flags: list[str],
+        patient_symptoms: str,
+    ) -> list[str]:
+        symptom_blob = patient_symptoms.lower()
+        steps: list[str] = ["Repeat focused clinical examination and full vital signs review."]
+
+        top_conditions = [item.condition for item in diagnoses[:3]]
+        condition_steps = {
+            "Pulmonary Embolism": [
+                "Order D-dimer and urgent CT pulmonary angiography if PE probability is intermediate/high.",
+                "Assess hemodynamic stability and initiate emergency referral pathway.",
+                "Perform lower-limb venous Doppler if DVT is suspected.",
+            ],
+            "Community-Acquired Pneumonia": [
+                "Order CBC, CRP, and chest imaging correlation for pneumonia severity assessment.",
+                "Obtain sputum and blood cultures before antibiotics when clinically feasible.",
+            ],
+            "Pneumonia with Pleurisy": [
+                "Check pleuritic pain severity and evaluate for pleural effusion with chest imaging.",
+                "Consider inflammatory markers and focused respiratory examination follow-up.",
+            ],
+            "Acute Bronchitis": [
+                "Provide symptomatic respiratory care plan and monitor for worsening dyspnea/fever.",
+                "Reassess if symptoms persist beyond expected course or red flags develop.",
+            ],
+            "Asthma Exacerbation": [
+                "Check peak expiratory flow and bronchodilator response.",
+                "Escalate to urgent care if persistent wheeze or oxygen desaturation is present.",
+            ],
+            "Pulmonary Edema": [
+                "Evaluate for cardiac cause with ECG, BNP, and bedside imaging as available.",
+                "Monitor oxygenation continuously and assess need for urgent cardiology review.",
+            ],
+        }
+
+        for condition in top_conditions:
+            steps.extend(condition_steps.get(condition, []))
+
+        if any(term in symptom_blob for term in ("chest pain", "tachycardia", "d-dimer")):
+            steps.append("Perform ECG and serial troponin testing to exclude concurrent acute coronary syndrome.")
+        if any(term in symptom_blob for term in ("hypoxia", "spo2", "oxygen", "respiratory distress")):
+            steps.append("Start continuous pulse oximetry and titrate oxygen support per clinical protocol.")
+
         if red_flags:
             steps.append("Escalate urgently because red-flag criteria were triggered.")
-        return steps
+
+        if not top_conditions:
+            steps.append("Correlate with CBC, CRP, and baseline labs to refine differential diagnosis.")
+
+        deduped_steps: list[str] = []
+        seen: set[str] = set()
+        for step in steps:
+            if step not in seen:
+                seen.add(step)
+                deduped_steps.append(step)
+
+        return deduped_steps[:8]
