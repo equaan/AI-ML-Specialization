@@ -26,7 +26,8 @@ class Settings:
     pubmed_api_key: str | None = os.getenv("PUBMED_API_KEY") or None
     langsmith_api_key: str | None = os.getenv("LANGSMITH_API_KEY") or None
     langsmith_project: str = os.getenv("LANGSMITH_PROJECT", "mediagent")
-    langchain_tracing_v2: bool = os.getenv("LANGCHAIN_TRACING_V2", "false").lower() == "true"
+    langsmith_enabled: bool = os.getenv("LANGSMITH_ENABLED", "false").lower() == "true"
+    langchain_tracing_v2: bool = False
     log_level: str = os.getenv("LOG_LEVEL", "INFO")
     cors_origins: list[str] = None  # type: ignore[assignment]
 
@@ -34,6 +35,11 @@ class Settings:
         origins = os.getenv("CORS_ORIGINS", "http://localhost:3000")
         object.__setattr__(self, "cors_origins", _split_csv(origins))
         Path(self.chromadb_path).mkdir(parents=True, exist_ok=True)
+        tracing_requested = os.getenv("LANGCHAIN_TRACING_V2", "false").lower() == "true"
+        tracing_enabled = self.langsmith_enabled and tracing_requested and bool(self.langsmith_api_key)
+        object.__setattr__(self, "langchain_tracing_v2", tracing_enabled)
+        if not tracing_enabled:
+            os.environ["LANGCHAIN_TRACING_V2"] = "false"
 
 
 @lru_cache(maxsize=1)

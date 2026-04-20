@@ -4,6 +4,7 @@ $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $repoRoot = (Resolve-Path (Join-Path $scriptDir "..")).Path
 $backendDir = Join-Path $repoRoot "backend"
 $frontendDir = Join-Path $repoRoot "frontend"
+$frontendDistIndex = Join-Path $frontendDir "dist\index.html"
 $uvicornExe = Join-Path $repoRoot "venv\Scripts\uvicorn.exe"
 $pythonExe = Join-Path $repoRoot "venv\Scripts\python.exe"
 $ngrokWinGetPath = Join-Path $env:LOCALAPPDATA "Microsoft\WinGet\Links\ngrok.exe"
@@ -110,8 +111,9 @@ if (-not (Test-Path $pythonExe)) {
   throw "python not found at '$pythonExe'. Create venv and install backend requirements first."
 }
 
-if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
-  throw "npm is not available in this shell. Install Node.js and retry."
+$serveFrontendFromBackend = Test-Path $frontendDistIndex
+if (-not $serveFrontendFromBackend -and -not (Get-Command npm -ErrorAction SilentlyContinue)) {
+  throw "npm is not available in this shell and no built frontend was found. Install Node.js or build the frontend first."
 }
 
 $ngrokExe = $null
@@ -133,10 +135,32 @@ Kill-StaleProcessesAndPorts
 $ollamaCmd = "`$env:OLLAMA_MODELS='$ollamaModelsDir'; & '$ollamaExe' serve"
 $backendCmd = "Set-Location '$repoRoot'; & '$uvicornExe' backend.main:app --host 127.0.0.1 --port 8000"
 $frontendCmd = "Set-Location '$frontendDir'; npx vite --host 127.0.0.1 --port 3000"
+$localAppUrl = "http://localhost:8000"
+$ngrokPort = 8000
 $ngrokStdout = Join-Path $repoRoot "ngrok_runtime.log"
 $ngrokStderr = Join-Path $repoRoot "ngrok_runtime.err.log"
-if (Test-Path $ngrokStdout) { Remove-Item $ngrokStdout -Force }
-if (Test-Path $ngrokStderr) { Remove-Item $ngrokStderr -Force }
+foreach ($logPath in @($ngrokStdout, $ngrokStderr)) {
+  if (-not (Test-Path $logPath)) {
+    continue
+  }
+
+  try {
+    Remove-Item $logPath -Force -ErrorAction Stop
+  } catch {
+    try {
+      Clear-Content -Path $logPath -Force -ErrorAction Stop
+    } catch {
+      Write-Warning "Could not reset log file '$logPath'. A new runtime log name will be used."
+      $timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+      $renamed = "{0}.{1}.log" -f [System.IO.Path]::GetFileNameWithoutExtension($logPath), $timestamp
+      if ($logPath -eq $ngrokStdout) {
+        $ngrokStdout = Join-Path $repoRoot $renamed
+      } else {
+        $ngrokStderr = Join-Path $repoRoot $renamed
+      }
+    }
+  }
+}
 
 # Clean up stale ngrok processes so inspect ports are not locked.
 $existingNgrok = Get-Process ngrok -ErrorAction SilentlyContinue
@@ -160,15 +184,22 @@ if (-not $backendReady) {
   throw "Backend did not become healthy at http://127.0.0.1:8000/health within timeout."
 }
 
-Start-Process powershell -ArgumentList "-NoExit", "-Command", $frontendCmd | Out-Null
+if ($serveFrontendFromBackend) {
+  Write-Output "Frontend build detected; serving UI from FastAPI backend."
+} else {
+  Start-Process powershell -ArgumentList "-NoExit", "-Command", $frontendCmd | Out-Null
 
-Write-Output "Waiting for frontend to be available..."
-$frontendReady = Wait-ForHttpOk -Url "http://127.0.0.1:3000" -TimeoutSeconds 120
-if (-not $frontendReady) {
-  throw "Frontend did not become available at http://127.0.0.1:3000 within timeout."
+  Write-Output "Waiting for frontend to be available..."
+  $frontendReady = Wait-ForHttpOk -Url "http://127.0.0.1:3000" -TimeoutSeconds 120
+  if (-not $frontendReady) {
+    throw "Frontend did not become available at http://127.0.0.1:3000 within timeout."
+  }
+
+  $localAppUrl = "http://localhost:3000"
+  $ngrokPort = 3000
 }
 
-$ngrokProc = Start-Process -FilePath $ngrokExe -ArgumentList @("http", "3000", "--log", "stdout") -WorkingDirectory $repoRoot -RedirectStandardOutput $ngrokStdout -RedirectStandardError $ngrokStderr -PassThru
+$ngrokProc = Start-Process -FilePath $ngrokExe -ArgumentList @("http", "$ngrokPort", "--log", "stdout") -WorkingDirectory $repoRoot -RedirectStandardOutput $ngrokStdout -RedirectStandardError $ngrokStderr -PassThru
 Start-Sleep -Seconds 1
 if (-not (Get-Process -Id $ngrokProc.Id -ErrorAction SilentlyContinue)) {
   throw "ngrok process exited immediately. Check logs: $ngrokStdout and $ngrokStderr"
@@ -189,8 +220,11 @@ $ngrokStatsReady = Wait-ForHttpOk -Url "$publicUrl/stats" -TimeoutSeconds 45 -He
 
 Set-Content -Path (Join-Path $repoRoot "ngrok_url.txt") -Value $publicUrl
 
-Write-Output "Started ollama, backend, frontend, and ngrok in separate PowerShell windows."
-Write-Output "Open http://localhost:3000 on this PC."
+Write-Output "Started ollama, backend, and ngrok in separate PowerShell windows."
+if (-not $serveFrontendFromBackend) {
+  Write-Output "Started frontend dev server in a separate PowerShell window."
+}
+Write-Output "Open $localAppUrl on this PC."
 Write-Output "Use this ngrok URL on your laptop: $publicUrl"
 if ($inspectPort -gt 0) {
   Write-Output "ngrok inspector UI: http://127.0.0.1:$inspectPort"

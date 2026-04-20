@@ -17,9 +17,12 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from backend.agents.rag_agent import RAGAgent
+from backend.utils.data_paths import canonical_medqa_dir
+from scripts.ingest_medqa import load_medqa_records
 
 
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "data" / "processed" / "evaluation"
+DEFAULT_MEDQA_DIR = canonical_medqa_dir()
 
 
 class _NoPubMedTool:
@@ -89,8 +92,8 @@ def _answer_in_text(answer: str, text: str) -> bool:
     return hit_count >= max(1, int(0.7 * len(ans_tokens)))
 
 
-def evaluate(sample_size: int, seed: int, split: str, selection: str) -> dict[str, Any]:
-    ds = load_dataset("bigbio/med_qa", name="med_qa_en_source", split=split)
+def evaluate(sample_size: int, seed: int, split: str, selection: str, dataset_dir: Path) -> dict[str, Any]:
+    ds = load_medqa_records(split=split, dataset_dir=dataset_dir)
     total_available = len(ds)
     if total_available == 0:
         raise RuntimeError("MedQA split is empty; cannot evaluate.")
@@ -109,7 +112,11 @@ def evaluate(sample_size: int, seed: int, split: str, selection: str) -> dict[st
     for idx in sampled_indices:
         record = ds[idx]
         question = str(record.get("question", "")).strip()
-        options = [str(opt).strip() for opt in record.get("options", [])]
+        raw_options = record.get("options", [])
+        if isinstance(raw_options, dict):
+            options = [str(value).strip() for _, value in sorted(raw_options.items())]
+        else:
+            options = [str(opt).strip() for opt in raw_options]
         answer_raw = str(record.get("answer", "")).strip()
         expected_answer = _resolve_expected_answer(answer_raw, options)
 
@@ -213,9 +220,21 @@ def main() -> None:
         default=DEFAULT_OUTPUT_DIR,
         help="Directory to store evaluation output files.",
     )
+    parser.add_argument(
+        "--dataset-dir",
+        type=Path,
+        default=DEFAULT_MEDQA_DIR,
+        help="Local MedQA dataset directory; falls back to Hugging Face if missing.",
+    )
     args = parser.parse_args()
 
-    metrics = evaluate(sample_size=args.sample_size, seed=args.seed, split=args.split, selection=args.selection)
+    metrics = evaluate(
+        sample_size=args.sample_size,
+        seed=args.seed,
+        split=args.split,
+        selection=args.selection,
+        dataset_dir=args.dataset_dir,
+    )
     json_path, md_path = write_reports(metrics, args.output_dir)
 
     print(f"Evaluation complete. MRR@5: {metrics['mrr_at_5']}")

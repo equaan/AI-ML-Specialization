@@ -7,7 +7,7 @@ from pathlib import Path
 import httpx
 import fitz
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import JSONResponse, PlainTextResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.agents.orchestrator import MediAgentOrchestrator
@@ -32,6 +32,8 @@ app = FastAPI(
     version="0.1.0",
     description="Multimodal clinical decision support backend for MediAgent.",
 )
+
+FRONTEND_DIST_DIR = Path(__file__).resolve().parents[1] / "frontend" / "dist"
 
 app.add_middleware(
     CORSMiddleware,
@@ -178,7 +180,7 @@ async def analyze_patient(
         voice_path = await _save_upload(voice, temp_root) if voice else None
 
         voice_transcript = voice_processor.transcribe(voice_path) if voice_path else None
-        parsed_lab_report = _parse_pdf_report(pdf_path) if pdf_path else None
+        parsed_lab_report, pdf_context = _extract_pdf_artifacts(pdf_path) if pdf_path else (None, "")
         pdf_summary = _summarize_lab_report(parsed_lab_report) if parsed_lab_report else ""
 
         combined_symptoms = "\n".join(
@@ -190,6 +192,7 @@ async def analyze_patient(
                 "patient_symptoms": combined_symptoms,
                 "image_path": str(image_path) if image_path else None,
                 "pdf_path": str(pdf_path) if pdf_path else None,
+                "document_context": pdf_context,
                 "voice_transcript": voice_transcript,
                 "messages": [],
             }
@@ -257,14 +260,19 @@ async def _save_upload(upload: UploadFile, temp_root: Path) -> Path:
     return destination
 
 
-def _parse_pdf_report(pdf_path: Path | None):
+def _extract_pdf_artifacts(pdf_path: Path | None):
     if not pdf_path:
-        return None
+        return None, ""
     try:
-        return pdf_parser.parse_lab_report(pdf_path)
+        raw_text = pdf_parser.extract_text(pdf_path)
+        parsed = pdf_parser.parse_lab_report_text(raw_text, source_name=pdf_path.name)
+        context = pdf_parser.build_context_summary(raw_text, source_name=pdf_path.name)
+        if parsed.report_type in {"Guideline Document", "Clinical Document", "Unknown"} and not parsed.test_results:
+            return None, context
+        return parsed, context
     except Exception as exc:
         logger.warning("PDF parsing failed: %s", exc)
-        return None
+        return None, ""
 
 
 def _summarize_lab_report(parsed_lab_report) -> str:
@@ -303,3 +311,24 @@ def _report_to_pdf_bytes(report: dict) -> bytes:
     text = _report_to_markdown(report)
     page.insert_textbox(fitz.Rect(40, 40, 555, 800), text, fontsize=11)
     return doc.tobytes()
+
+
+@app.get("/{full_path:path}", include_in_schema=False)
+async def serve_frontend(full_path: str) -> Response:
+    if not FRONTEND_DIST_DIR.exists():
+        raise HTTPException(status_code=404, detail="Frontend build not found.")
+
+    blocked_prefixes = ("api", "health", "stats", "docs", "openapi.json", "redoc")
+    normalized = full_path.strip("/")
+    if any(normalized == prefix or normalized.startswith(f"{prefix}/") for prefix in blocked_prefixes):
+        raise HTTPException(status_code=404, detail="Not found.")
+
+    candidate = (FRONTEND_DIST_DIR / normalized) if normalized else (FRONTEND_DIST_DIR / "index.html")
+    if normalized and candidate.exists() and candidate.is_file():
+        return FileResponse(candidate)
+
+    index_path = FRONTEND_DIST_DIR / "index.html"
+    if index_path.exists():
+        return FileResponse(index_path)
+
+    raise HTTPException(status_code=404, detail="Frontend build not found.")

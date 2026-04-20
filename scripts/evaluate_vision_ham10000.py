@@ -14,9 +14,10 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from backend.agents.vision_agent import VisionAgent
+from backend.utils.data_paths import canonical_ham10000_dir
 
 
-DEFAULT_DATA_DIR = PROJECT_ROOT / "data" / "raw" / "ham10000"
+DEFAULT_DATA_DIR = canonical_ham10000_dir()
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "data" / "processed" / "evaluation"
 
 

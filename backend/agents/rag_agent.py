@@ -5,6 +5,8 @@ from typing import Any
 
 from backend.models.schemas import RAGContext, RelevantCondition, SourceReference, VisionFindings
 from backend.rag.embedder import BioBERTEmbedder
+from backend.rag.local_retriever import retrieve_local_evidence
+from backend.rag.medical_knowledge import CONDITION_PROFILES, ConditionProfile
 from backend.rag.vectorstore import query_collection
 from backend.tools.pubmed_tool import PubMedArticle, PubMedTool
 
@@ -18,21 +20,31 @@ class RAGAgent:
         self.embedder = embedder or BioBERTEmbedder()
         self.pubmed_tool = pubmed_tool or PubMedTool()
 
-    def analyze(self, patient_symptoms: str, vision_findings: VisionFindings | dict[str, Any] | None = None) -> RAGContext:
+    def analyze(
+        self,
+        patient_symptoms: str,
+        vision_findings: VisionFindings | dict[str, Any] | None = None,
+        document_context: str = "",
+    ) -> RAGContext:
         vision = self._normalize_vision_findings(vision_findings)
-        query_text = self._build_query(patient_symptoms, vision)
+        query_text = self._build_query(patient_symptoms, vision, document_context)
+        ranked_conditions = self._infer_conditions(patient_symptoms, vision, document_context)
+        local_evidence, local_sources = self._retrieve_local_context(
+            query_text,
+            ranked_conditions,
+            document_context,
+        )
         chroma_hits = self._retrieve_chroma_context(query_text)
         pubmed_articles = self._retrieve_pubmed_context(query_text)
-        conditions = self._infer_conditions(patient_symptoms, vision)
-        evidence = self._merge_evidence(chroma_hits, pubmed_articles)
-        sources = self._build_sources(chroma_hits, pubmed_articles)
+        evidence = self._merge_evidence(local_evidence, chroma_hits, pubmed_articles, document_context)
+        sources = self._build_sources(local_sources, chroma_hits, pubmed_articles)
 
         return RAGContext(
-            relevant_conditions=conditions,
-            supporting_evidence=evidence[:5],
-            sources=sources[:5],
-            retrieval_count=len(evidence[:5]),
-            key_clinical_patterns=self._extract_patterns(patient_symptoms, vision),
+            relevant_conditions=ranked_conditions,
+            supporting_evidence=evidence[:6],
+            sources=sources[:6],
+            retrieval_count=len(evidence[:6]),
+            key_clinical_patterns=self._extract_patterns(patient_symptoms, vision, document_context, ranked_conditions),
             missing_information=self._missing_information(patient_symptoms),
         )
 
@@ -43,16 +55,32 @@ class RAGAgent:
             return VisionFindings.model_validate(vision_findings)
         return VisionFindings()
 
-    def _build_query(self, patient_symptoms: str, vision: VisionFindings) -> str:
-        parts = [patient_symptoms.strip(), " ".join(vision.findings), " ".join(vision.anomalies)]
+    def _build_query(self, patient_symptoms: str, vision: VisionFindings, document_context: str) -> str:
+        parts = [
+            patient_symptoms.strip(),
+            " ".join(vision.findings),
+            " ".join(vision.anomalies),
+            document_context.strip(),
+        ]
         return " ".join(part for part in parts if part)
+
+    def _retrieve_local_context(
+        self,
+        query_text: str,
+        conditions: list[RelevantCondition],
+        document_context: str,
+    ) -> tuple[list[str], list[SourceReference]]:
+        condition_terms = {condition.condition for condition in conditions[:3]}
+        if document_context:
+            condition_terms |= {document_context[:40]}
+        return retrieve_local_evidence(query_text, condition_terms=condition_terms, limit=4)
 
     def _retrieve_chroma_context(self, query_text: str) -> list[str]:
         if not query_text.strip():
             return []
-        query_embedding = self.embedder.embed_texts([query_text])[0]
         try:
-            result = query_collection("medqa_chunks", query_embedding, n_results=5)
+            query_embedding = self.embedder.embed_texts([query_text])[0]
+            result = query_collection("medqa_chunks", query_embedding, n_results=4)
             documents = result.get("documents", [[]])
             return [doc for doc in documents[0] if doc]
         except Exception:
@@ -60,123 +88,55 @@ class RAGAgent:
 
     def _retrieve_pubmed_context(self, query_text: str) -> list[PubMedArticle]:
         try:
-            return self.pubmed_tool.search(query_text, max_results=5)
+            return self.pubmed_tool.search(query_text, max_results=3)
         except Exception:
             return []
 
-    def _infer_conditions(self, symptoms: str, vision: VisionFindings) -> list[RelevantCondition]:
-        symptom_blob = f"{symptoms} {' '.join(vision.findings)} {' '.join(vision.anomalies)}".lower()
-        profiles = [
-            {
-                "condition": "Pulmonary Embolism",
-                "terms": {
-                    "pleuritic chest pain": 3,
-                    "pleuritic": 3,
-                    "pleurisy": 3,
-                    "d-dimer": 3,
-                    "hemoptysis": 3,
-                    "unilateral leg swelling": 3,
-                    "sudden shortness of breath": 2,
-                    "tachycardia": 2,
-                    "hypoxia": 2,
-                    "oxygen saturation drop": 2,
-                    "chest pain": 1,
-                    "shortness of breath": 1,
-                },
-                "minimum_score": 4,
-            },
-            {
-                "condition": "Community-Acquired Pneumonia",
-                "terms": {
-                    "fever": 2,
-                    "cough": 2,
-                    "productive cough": 2,
-                    "infiltrate": 3,
-                    "consolidation": 3,
-                    "opacity": 1,
-                    "chest pain": 1,
-                },
-                "minimum_score": 4,
-            },
-            {
-                "condition": "Pneumonia with Pleurisy",
-                "terms": {
-                    "pleuritic chest pain": 3,
-                    "pleuritic": 2,
-                    "pleurisy": 2,
-                    "fever": 1,
-                    "cough": 1,
-                },
-                "minimum_score": 3,
-            },
-            {
-                "condition": "COVID-19 Pneumonitis",
-                "terms": {
-                    "fever": 1,
-                    "cough": 1,
-                    "bilateral": 2,
-                    "ground glass": 3,
-                    "opacity": 1,
-                    "loss of smell": 2,
-                },
-                "minimum_score": 3,
-            },
-            {
-                "condition": "Pulmonary Edema",
-                "terms": {
-                    "orthopnea": 3,
-                    "paroxysmal nocturnal dyspnea": 3,
-                    "cardiomegaly": 2,
-                    "edema": 2,
-                    "breathlessness": 1,
-                },
-                "minimum_score": 3,
-            },
-            {
-                "condition": "Asthma Exacerbation",
-                "terms": {
-                    "wheeze": 3,
-                    "shortness of breath": 2,
-                    "tightness": 2,
-                    "night cough": 2,
-                },
-                "minimum_score": 3,
-            },
-            {
-                "condition": "Acute Bronchitis",
-                "terms": {
-                    "cough": 2,
-                    "sputum": 2,
-                    "fever": 1,
-                    "sore throat": 1,
-                },
-                "minimum_score": 3,
-            },
-        ]
+    def _infer_conditions(
+        self,
+        symptoms: str,
+        vision: VisionFindings,
+        document_context: str,
+    ) -> list[RelevantCondition]:
+        combined_text = self._build_query(symptoms, vision, document_context).lower()
+        scored: list[tuple[int, list[str], ConditionProfile]] = []
 
-        scored: list[tuple[int, list[str], str]] = []
-        for profile in profiles:
-            matched = [term for term in profile["terms"] if term in symptom_blob]
-            score = sum(profile["terms"][term] for term in matched)
-            if score >= profile["minimum_score"]:
-                scored.append((score, matched, profile["condition"]))
+        for profile in CONDITION_PROFILES:
+            matched_terms: list[str] = []
+            score = 0
+
+            for hallmark in profile.hallmark_terms:
+                if hallmark in combined_text:
+                    matched_terms.append(hallmark)
+                    score += 3
+
+            for term, weight in profile.supporting_terms.items():
+                if term in combined_text:
+                    if term not in matched_terms:
+                        matched_terms.append(term)
+                    score += weight
+
+            if any(term in document_context.lower() for term in profile.document_terms):
+                score += 4
+                matched_terms.append("document-guided evidence")
+
+            if vision.image_type == "skin_lesion" and profile.condition in {"Cellulitis", "Melanoma"}:
+                score += 2
+            if "non_medical" == vision.image_type and profile.condition in {"Cellulitis", "Melanoma"}:
+                score -= 1
+
+            if score > 0:
+                scored.append((score, matched_terms[:6], profile))
 
         scored.sort(key=lambda item: item[0], reverse=True)
 
-        def likelihood_from_score(score: int) -> str:
-            if score >= 6:
-                return "high"
-            if score >= 4:
-                return "moderate"
-            return "low"
-
         conditions: list[RelevantCondition] = []
-        for score, matched, condition_name in scored[:5]:
+        for score, matched, profile in scored[:5]:
             conditions.append(
                 RelevantCondition(
-                    condition=condition_name,
-                    likelihood=likelihood_from_score(score),
-                    supporting_symptoms=matched,
+                    condition=profile.condition,
+                    likelihood=self._likelihood_from_score(score),
+                    supporting_symptoms=matched or [profile.summary],
                     supporting_evidence_indices=list(range(min(len(matched), 3))),
                 )
             )
@@ -186,47 +146,83 @@ class RAGAgent:
                 RelevantCondition(
                     condition="Undifferentiated clinical presentation",
                     likelihood="low",
-                    supporting_symptoms=["Insufficient structured evidence; stronger retrieval needed."],
+                    supporting_symptoms=["Insufficient structured evidence; broader evaluation is still required."],
                     supporting_evidence_indices=[],
                 )
             )
-        return conditions[:5]
 
-    def _merge_evidence(self, chroma_hits: list[str], pubmed_articles: list[PubMedArticle]) -> list[str]:
+        return conditions
+
+    @staticmethod
+    def _likelihood_from_score(score: int) -> str:
+        if score >= 10:
+            return "high"
+        if score >= 6:
+            return "moderate"
+        return "low"
+
+    def _merge_evidence(
+        self,
+        local_hits: list[str],
+        chroma_hits: list[str],
+        pubmed_articles: list[PubMedArticle],
+        document_context: str,
+    ) -> list[str]:
         merged = OrderedDict[str, None]()
+
+        if document_context:
+            merged[document_context.strip()] = None
+        for hit in local_hits:
+            merged[hit.strip()] = None
         for hit in chroma_hits:
             merged[hit.strip()] = None
         for article in pubmed_articles:
             snippet = f"{article.title}: {article.abstract}".strip(": ")
             merged[snippet] = None
-        return list(merged.keys())
+        return [item for item in merged.keys() if item]
 
-    def _build_sources(self, chroma_hits: list[str], pubmed_articles: list[PubMedArticle]) -> list[SourceReference]:
-        sources: list[SourceReference] = []
+    def _build_sources(
+        self,
+        local_sources: list[SourceReference],
+        chroma_hits: list[str],
+        pubmed_articles: list[PubMedArticle],
+    ) -> list[SourceReference]:
+        sources: list[SourceReference] = list(local_sources)
         for index, _ in enumerate(chroma_hits):
             sources.append(SourceReference(title=f"ChromaDB chunk {index + 1}", pmid=None, url=None))
         for article in pubmed_articles:
             sources.append(SourceReference(title=article.title, pmid=article.pmid, url=article.url))
         return sources
 
-    def _extract_patterns(self, symptoms: str, vision: VisionFindings) -> list[str]:
+    def _extract_patterns(
+        self,
+        symptoms: str,
+        vision: VisionFindings,
+        document_context: str,
+        conditions: list[RelevantCondition],
+    ) -> list[str]:
         patterns: list[str] = []
-        if "fever" in symptoms.lower():
-            patterns.append("Systemic inflammatory or infectious pattern present.")
+        lower = symptoms.lower()
+        if "fever" in lower:
+            patterns.append("Febrile/inflammatory pattern detected in history.")
+        if any(term in lower for term in ("chest pain", "shortness of breath", "dyspnea")):
+            patterns.append("Cardiorespiratory symptom cluster is present.")
+        if document_context:
+            patterns.append("Uploaded document context influenced retrieval ranking.")
         if vision.findings:
-            patterns.append("Imaging findings are available to refine differential diagnosis.")
-        if not patterns:
-            patterns.append("Limited structured pattern evidence available.")
-        return patterns
+            patterns.append("Imaging findings are available to refine the differential.")
+        if conditions:
+            patterns.append(f"Top ranked consideration: {conditions[0].condition}.")
+        return patterns or ["Limited structured pattern evidence available."]
 
     @staticmethod
     def _missing_information(symptoms: str) -> list[str]:
         lower = symptoms.lower()
         missing: list[str] = []
-        if "duration" not in lower:
+        if "day" not in lower and "week" not in lower and "hour" not in lower:
             missing.append("Duration of symptoms")
-        if "spo2" not in lower and "oxygen" not in lower:
+        if "spo2" not in lower and "oxygen" not in lower and "saturation" not in lower:
             missing.append("Oxygen saturation")
-        if "age" not in lower:
+        if "age" not in lower and "child" not in lower and "adult" not in lower:
             missing.append("Patient age")
         return missing

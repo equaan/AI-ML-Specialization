@@ -2,17 +2,27 @@
 
 This file tells you exactly what to download, from where, and where to place it.
 
-## 1) Create local dataset folders
+## 1) Canonical local dataset folders
 
 Run from repo root:
 
 ```powershell
-mkdir data\raw\medqa -Force
-mkdir data\raw\medmcqa -Force
-mkdir data\raw\ham10000 -Force
-mkdir data\raw\mimic_cxr -Force
+mkdir data\raw\text\medqa -Force
+mkdir data\raw\text\medmcqa -Force
+mkdir data\raw\skin\ham10000 -Force
+mkdir data\raw\cxr\kaggle_pneumonia -Force
+mkdir data\raw\mri\utsw_glioma -Force
 mkdir data\raw\guidelines -Force
 ```
+
+Recommended canonical paths used by the repo now:
+
+- `data/raw/text/medqa/`
+- `data/raw/text/medmcqa/`
+- `data/raw/skin/ham10000/`
+- `data/raw/cxr/kaggle_pneumonia/`
+- `data/raw/mri/utsw_glioma/`
+- `data/raw/guidelines/`
 
 ## 2) Required datasets and sources
 
@@ -20,7 +30,7 @@ mkdir data\raw\guidelines -Force
 - Purpose: Populate Chroma collection `medqa_chunks`
 - Source: Hugging Face `bigbio/med_qa`
 - URL: https://huggingface.co/datasets/bigbio/med_qa
-- Local target folder: `data/raw/medqa/`
+- Local target folder: `data/raw/text/medqa/`
 
 Recommended (no manual download needed):
 - Use ingestion script directly:
@@ -51,7 +61,7 @@ Run:
 - Purpose: End-to-end benchmark in Phase 5
 - Source: Hugging Face `medmcqa`
 - URL: https://huggingface.co/datasets/medmcqa
-- Local target folder: `data/raw/medmcqa/`
+- Local target folder: `data/raw/text/medmcqa/`
 
 Quick check:
 
@@ -64,7 +74,7 @@ Quick check:
 - Sources:
   - Kaggle (official): https://www.kaggle.com/datasets/kmader/skin-cancer-mnist-ham10000
   - Hugging Face mirrors (if needed)
-- Local target folder: `data/raw/ham10000/`
+- Local target folder: `data/raw/skin/ham10000/`
 
 Kaggle CLI steps:
 
@@ -80,7 +90,7 @@ Expand-Archive -Path data\raw\ham10000\skin-cancer-mnist-ham10000.zip -Destinati
 - Source: PhysioNet
 - URL: https://physionet.org/content/mimic-cxr/
 - Notes: Requires credentialing and data use agreement
-- Local target folder: `data/raw/mimic_cxr/`
+- Local target folder: `data/raw/mri/utsw_glioma/` for MRI work, or `data/raw/mimic_cxr/` if you later obtain MIMIC-CXR access.
 
 ### F. Clinical guideline PDFs (recommended)
 - Purpose: Knowledge grounding and citations
@@ -98,9 +108,12 @@ Suggested starter files:
 ## 3) Minimal dataset set to start now
 
 If you want the fastest path to unblock development, do this first:
-1. Run MedQA ingest with `--limit 500`
-2. Run PubMed ingest with 3-5 queries and `--max-results-per-query 20`
-3. Download at least 50 HAM10000 images into `data/raw/ham10000/`
+1. Put MedQA under `data/raw/text/medqa/`
+2. Put MedMCQA under `data/raw/text/medmcqa/`
+3. Put HAM10000 under `data/raw/skin/ham10000/`
+4. Put the Kaggle pneumonia dataset under `data/raw/cxr/kaggle_pneumonia/`
+5. Put guideline PDFs under `data/raw/guidelines/`
+6. Run `python scripts/audit_local_datasets.py`
 
 ## 4) Verification checklist
 
@@ -124,5 +137,5 @@ When Ollama is installed and models are pulled, validate:
 ## 5) Practical notes
 - `MIMIC-CXR` is optional for now due access overhead.
 - Start with `llava:7b` if RAM is limited, upgrade to `llava:13b` later.
-- Keep raw downloads under `data/raw/` only.
+- Keep raw downloads under `data/raw/` only and prefer the canonical subfolders above.
 - Chroma data is generated under `data/chromadb/` and is gitignored.

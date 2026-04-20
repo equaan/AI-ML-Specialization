@@ -14,6 +14,7 @@ class MediAgentState(TypedDict, total=False):
     patient_symptoms: str
     image_path: Optional[str]
     pdf_path: Optional[str]
+    document_context: Optional[str]
     voice_transcript: Optional[str]
     vision_findings: Optional[dict[str, Any]]
     rag_context: Optional[dict[str, Any]]
@@ -67,7 +68,11 @@ class MediAgentOrchestrator:
 
     def _rag_node(self, state: MediAgentState) -> MediAgentState:
         symptoms = state.get("voice_transcript") or state.get("patient_symptoms", "")
-        rag_context = self.rag_agent.analyze(symptoms, state.get("vision_findings"))
+        rag_context = self.rag_agent.analyze(
+            symptoms,
+            state.get("vision_findings"),
+            document_context=state.get("document_context") or "",
+        )
         return {
             **state,
             "current_agent": "rag_agent",

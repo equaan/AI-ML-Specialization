@@ -554,3 +554,99 @@ D:\AI-ML-Specialization\venv\Scripts\python.exe -m pytest D:\AI-ML-Specializatio
 - Added direct artifact paths for JSON and Markdown reports under `data/processed/evaluation/`.
 - Marked Phase 5 task in `TODO.md` as complete:
   - `Document all results in README.md`
+
+## Repo stabilization + dataset audit (current session)
+
+### Runtime and architecture fixes completed
+- Diagnosed a core design issue in the current prototype:
+  - the old `RAGAgent` could only rank a tiny hardcoded condition set, which is why many cases collapsed into weak or generic outputs
+- Reworked retrieval and diagnosis flow so the backend now:
+  - uses a broader local medical knowledge profile set
+  - uses uploaded document context more deliberately
+  - retrieves local guideline evidence from `data/raw/guidelines/`
+- Hardened PDF handling:
+  - guideline PDFs are no longer treated like normal lab reports by default
+  - added document classification and context summary behavior in `backend/tools/pdf_parser.py`
+- Improved runtime resilience:
+  - replaced fragile SQLite report persistence with a lightweight JSON-backed runtime report store
+  - disabled accidental LangSmith tracing unless explicitly enabled
+  - improved `scripts/start_demo_stack.ps1` log handling and frontend serving behavior
+
+### Local data layout cleanup completed
+- Added canonical dataset path helpers in:
+  - `backend/utils/data_paths.py`
+- Updated repo scripts to prefer local datasets first instead of remote-only loading:
+  - `scripts/ingest_medqa.py`
+  - `scripts/evaluate_rag_medqa_mrr.py`
+  - `scripts/evaluate_pipeline_medmcqa_accuracy.py`
+  - `scripts/evaluate_vision_ham10000.py`
+- Added dataset audit script:
+  - `scripts/audit_local_datasets.py`
+- Updated dataset docs to reflect the new canonical layout in:
+  - `docs/DATASETS.md`
+
+### Canonical dataset structure now used
+- `data/raw/text/medqa/`
+- `data/raw/text/medmcqa/`
+- `data/raw/skin/ham10000/`
+- `data/raw/cxr/kaggle_pneumonia/`
+- `data/raw/mri/utsw_glioma/`
+- `data/raw/guidelines/`
+
+### Dataset audit results verified
+- HAM10000:
+  - `10015` images found
+  - metadata file present
+- Kaggle pneumonia CXR:
+  - `5856` images found
+  - train/val/test folders present
+- UTSW glioma MRI:
+  - `625` subject folders
+  - `6349` NIfTI files found
+  - metadata TSV present
+- Guidelines:
+  - `11` PDFs found
+- MedMCQA:
+  - local Hugging Face disk export present
+- MedQA:
+  - local Hugging Face disk export present
+
+### Validation completed
+- Ran local dataset audit:
+
+```powershell
+.\venv\Scripts\python.exe scripts\audit_local_datasets.py
+```
+
+- Re-ran key backend tests after the refactor:
+
+```powershell
+.\venv\Scripts\python.exe -m pytest tests/test_rag_agent.py tests/test_pipeline.py tests/test_api_analysis_contract.py -q
+```
+
+- Result:
+  - `7 passed`
+
+### Important current assessment
+- The project is now in a better state structurally, but it is still **not** a production-quality medical assistant.
+- The current multimodal app is still a prototype.
+- Biggest remaining gap:
+  - there is still no trained specialist vision classifier for skin, chest X-ray, or MRI in the repo
+  - the current `VisionAgent` still depends mostly on generic model behavior and fallback heuristics
+
+### Immediate next work
+1. Build the first specialist training pipeline on HAM10000.
+2. Train a real baseline skin-lesion classifier.
+3. Add saved-model loading path so the backend can use the trained classifier before generic fallback logic.
+4. Build the second specialist pipeline for chest X-ray pneumonia classification.
+5. Improve MRI handling for narrow glioma-support tasks only after the first two models are stable.
+
+### Longer future work
+- Add CheXpert or stronger chest X-ray datasets for a more serious thoracic model.
+- Replace heuristic confidence with calibrated scores.
+- Add proper offline ingestion for clinical guidelines into a dedicated retrieval collection.
+- Add modality routing so each image type goes to a specialist model first.
+- Add benchmark reporting for specialist models:
+  - HAM10000 classification metrics
+  - CXR pneumonia metrics
+  - MRI narrow-task metrics

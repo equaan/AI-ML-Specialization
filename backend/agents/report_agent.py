@@ -17,13 +17,23 @@ from backend.models.schemas import (
 
 
 ICD10_MAP = {
+    "Sepsis": "A41.9",
     "Pulmonary Embolism": "I26.99",
     "Community-Acquired Pneumonia": "J18.9",
     "Pneumonia with Pleurisy": "J18.9",
     "COVID-19 Pneumonitis": "U07.1",
+    "COVID-19": "U07.1",
     "Pulmonary Edema": "J81.1",
+    "Acute Heart Failure": "I50.9",
     "Asthma Exacerbation": "J45.901",
     "Acute Bronchitis": "J20.9",
+    "Acute Coronary Syndrome": "I24.9",
+    "Stable Angina": "I20.9",
+    "Viral Upper Respiratory Infection": "J06.9",
+    "Influenza-like Illness": "J11.1",
+    "Bacterial Pharyngitis": "J02.8",
+    "Cellulitis": "L03.90",
+    "Melanoma": "C43.9",
     "Undifferentiated clinical presentation": "R69",
 }
 
@@ -210,7 +220,10 @@ class ReportAgent:
         red_flags: list[str] = []
         if any(term in combined for term in ("spo2", "oxygen saturation", "respiratory distress", "cyanosis")):
             red_flags.append("Possible respiratory compromise mentioned; urgent review recommended.")
-        if any(term in combined for term in ("chest pain", "neurological deficit", "sepsis", "altered mental status")):
+        if any(
+            term in combined
+            for term in ("chest pain", "neurological deficit", "sepsis", "altered mental status", "less responsive")
+        ):
             red_flags.append("High-risk symptom detected in input; escalate for clinician assessment.")
         if "critical" in vision.severity_hint.lower():
             red_flags.append("Vision analysis flagged critical severity.")
@@ -235,6 +248,10 @@ class ReportAgent:
 
         top_conditions = [item.condition for item in diagnoses[:3]]
         condition_steps = {
+            "Sepsis": [
+                "Initiate urgent sepsis screening with full vitals, lactate, CBC, and blood cultures.",
+                "Escalate immediately for clinician review and organ-dysfunction assessment.",
+            ],
             "Pulmonary Embolism": [
                 "Order D-dimer and urgent CT pulmonary angiography if PE probability is intermediate/high.",
                 "Assess hemodynamic stability and initiate emergency referral pathway.",
@@ -252,6 +269,12 @@ class ReportAgent:
                 "Provide symptomatic respiratory care plan and monitor for worsening dyspnea/fever.",
                 "Reassess if symptoms persist beyond expected course or red flags develop.",
             ],
+            "Viral Upper Respiratory Infection": [
+                "Use supportive care, hydration, and follow-up if symptoms worsen or breathing becomes difficult.",
+            ],
+            "Influenza-like Illness": [
+                "Consider influenza or respiratory viral testing based on severity and local protocol.",
+            ],
             "Asthma Exacerbation": [
                 "Check peak expiratory flow and bronchodilator response.",
                 "Escalate to urgent care if persistent wheeze or oxygen desaturation is present.",
@@ -259,6 +282,26 @@ class ReportAgent:
             "Pulmonary Edema": [
                 "Evaluate for cardiac cause with ECG, BNP, and bedside imaging as available.",
                 "Monitor oxygenation continuously and assess need for urgent cardiology review.",
+            ],
+            "Acute Heart Failure": [
+                "Evaluate for cardiac decompensation with ECG, BNP, and chest imaging as available.",
+                "Monitor oxygenation and fluid status closely.",
+            ],
+            "Acute Coronary Syndrome": [
+                "Obtain ECG and serial troponin testing urgently.",
+                "Escalate for emergency clinician assessment of possible acute coronary syndrome.",
+            ],
+            "Stable Angina": [
+                "Risk-stratify chest pain and arrange prompt cardiac evaluation with ECG.",
+            ],
+            "Bacterial Pharyngitis": [
+                "Perform focused throat examination and consider testing if bacterial features predominate.",
+            ],
+            "Cellulitis": [
+                "Examine the involved skin area and assess for systemic spread or rapidly progressive infection.",
+            ],
+            "Melanoma": [
+                "Arrange focused dermatology review if the lesion has malignant features or recent change.",
             ],
         }
 
@@ -269,6 +312,8 @@ class ReportAgent:
             steps.append("Perform ECG and serial troponin testing to exclude concurrent acute coronary syndrome.")
         if any(term in symptom_blob for term in ("hypoxia", "spo2", "oxygen", "respiratory distress")):
             steps.append("Start continuous pulse oximetry and titrate oxygen support per clinical protocol.")
+        if any(term in symptom_blob for term in ("less responsive", "altered mental status", "confusion")):
+            steps.append("Escalate immediately because mental-status change can indicate severe illness.")
 
         if red_flags:
             steps.append("Escalate urgently because red-flag criteria were triggered.")

@@ -9,16 +9,18 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from backend.agents.orchestrator import MediAgentOrchestrator
+from backend.utils.data_paths import canonical_medmcqa_dir
 
 
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "data" / "processed" / "evaluation"
+DEFAULT_MEDMCQA_DIR = canonical_medmcqa_dir()
 
 
 @dataclass
@@ -97,8 +99,15 @@ def _pick_option(report_blob: str, options: list[str]) -> tuple[int, float]:
     return scored[0]
 
 
-def evaluate(sample_size: int, split: str, selection: str, seed: int) -> dict[str, Any]:
-    ds = load_dataset("medmcqa", split=split)
+def _load_medmcqa_split(split: str, dataset_dir: Path):
+    try:
+        return load_from_disk(str(dataset_dir))[split]
+    except Exception:
+        return load_dataset("medmcqa", split=split)
+
+
+def evaluate(sample_size: int, split: str, selection: str, seed: int, dataset_dir: Path) -> dict[str, Any]:
+    ds = _load_medmcqa_split(split, dataset_dir)
     total_available = len(ds)
     if total_available == 0:
         raise RuntimeError("MedMCQA split is empty; cannot evaluate.")
@@ -235,6 +244,12 @@ def main() -> None:
         default=DEFAULT_OUTPUT_DIR,
         help="Directory for output reports.",
     )
+    parser.add_argument(
+        "--dataset-dir",
+        type=Path,
+        default=DEFAULT_MEDMCQA_DIR,
+        help="Local MedMCQA dataset directory; falls back to Hugging Face if missing.",
+    )
     args = parser.parse_args()
 
     metrics = evaluate(
@@ -242,6 +257,7 @@ def main() -> None:
         split=args.split,
         selection=args.selection,
         seed=args.seed,
+        dataset_dir=args.dataset_dir,
     )
     json_path, md_path = write_reports(metrics, args.output_dir)
 

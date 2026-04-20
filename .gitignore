@@ -7,6 +7,7 @@ data/raw/
 data/processed/
 data/chromadb/
 data/*.db
+data/*.db-journal
 frontend/node_modules/
 frontend/dist/
 .pytest_cache/
@@ -14,6 +15,7 @@ frontend/dist/
 .ruff_cache/
 .DS_Store
 .demo/
+.vite-cache/
 ngrok_runtime.log
 ngrok_runtime.err.log
 ngrok_url.txt
