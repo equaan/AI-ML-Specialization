@@ -42,3 +42,24 @@ def test_report_agent_escalates_red_flags() -> None:
 
     assert report.red_flags
     assert report.estimated_urgency in {"urgent", "immediate"}
+
+
+def test_report_agent_maps_icd_for_pulmonary_embolism() -> None:
+    agent = ReportAgent(llm=None)
+    report = agent.generate(
+        "pleuritic chest pain with tachycardia and elevated d-dimer",
+        VisionFindings(),
+        RAGContext(
+            relevant_conditions=[
+                RelevantCondition(
+                    condition="Pulmonary Embolism",
+                    likelihood="high",
+                    supporting_symptoms=["pleuritic chest pain", "tachycardia", "d-dimer"],
+                    supporting_evidence_indices=[0],
+                )
+            ]
+        ),
+    )
+
+    assert report.differential_diagnosis[0].condition == "Pulmonary Embolism"
+    assert report.differential_diagnosis[0].icd_10_code == "I26.99"

@@ -17,7 +17,9 @@ from backend.models.schemas import (
 
 
 ICD10_MAP = {
+    "Pulmonary Embolism": "I26.99",
     "Community-Acquired Pneumonia": "J18.9",
+    "Pneumonia with Pleurisy": "J18.9",
     "COVID-19 Pneumonitis": "U07.1",
     "Pulmonary Edema": "J81.1",
     "Asthma Exacerbation": "J45.901",
@@ -48,8 +50,50 @@ class ReportAgent:
         rag = self._normalize_rag(rag_context)
         llm_report = self._generate_with_llm(patient_symptoms, vision, rag)
         if llm_report is not None:
-            return llm_report
+            return self._apply_rag_consistency_overrides(llm_report, rag, vision)
         return self._generate_fallback_report(patient_symptoms, vision, rag)
+
+    def _apply_rag_consistency_overrides(
+        self,
+        report: ClinicalReport,
+        rag: RAGContext,
+        vision: VisionFindings,
+    ) -> ClinicalReport:
+        existing_by_name = {item.condition.lower(): item for item in report.differential_diagnosis}
+        additions: list[DifferentialDiagnosis] = []
+
+        for condition in rag.relevant_conditions:
+            if condition.likelihood != "high":
+                continue
+            key = condition.condition.lower()
+            if key in existing_by_name:
+                existing = existing_by_name[key]
+                if existing.icd_10_code == "R69":
+                    existing.icd_10_code = ICD10_MAP.get(condition.condition, existing.icd_10_code)
+                continue
+
+            additions.append(
+                DifferentialDiagnosis(
+                    rank=0,
+                    condition=condition.condition,
+                    icd_10_code=ICD10_MAP.get(condition.condition, "R69"),
+                    confidence_score=LIKELIHOOD_TO_SCORE.get(condition.likelihood, 0.3),
+                    supporting_findings=condition.supporting_symptoms + vision.findings[:2],
+                    against_findings=[],
+                    clinical_rationale=(
+                        "Added from high-likelihood RAG evidence to preserve clinically "
+                        "salient differential coverage."
+                    ),
+                )
+            )
+
+        merged = additions + report.differential_diagnosis
+        for index, diagnosis in enumerate(merged, start=1):
+            diagnosis.rank = index
+            diagnosis.icd_10_code = ICD10_MAP.get(diagnosis.condition, diagnosis.icd_10_code)
+
+        report.differential_diagnosis = merged[:5]
+        return report
 
     @staticmethod
     def _normalize_vision(vision_findings: VisionFindings | dict[str, Any] | None) -> VisionFindings:

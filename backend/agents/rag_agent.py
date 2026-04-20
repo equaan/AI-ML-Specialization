@@ -67,25 +67,82 @@ class RAGAgent:
     def _infer_conditions(self, symptoms: str, vision: VisionFindings) -> list[RelevantCondition]:
         symptom_blob = f"{symptoms} {' '.join(vision.findings)} {' '.join(vision.anomalies)}".lower()
         rules = [
-            ("Community-Acquired Pneumonia", "high", ["fever", "cough", "infiltrate", "consolidation", "chest pain"]),
-            ("COVID-19 Pneumonitis", "moderate", ["fever", "cough", "bilateral", "opacity"]),
-            ("Pulmonary Edema", "moderate", ["edema", "cardiomegaly", "breathlessness", "orthopnea"]),
-            ("Asthma Exacerbation", "moderate", ["wheeze", "shortness of breath", "tightness"]),
-            ("Acute Bronchitis", "low", ["cough", "sputum", "fever"]),
+            {
+                "condition": "Pulmonary Embolism",
+                "likelihood": "high",
+                "keywords": [
+                    "pleuritic chest pain",
+                    "pleuritic",
+                    "pleurisy",
+                    "sudden shortness of breath",
+                    "tachycardia",
+                    "hemoptysis",
+                    "d-dimer",
+                    "hypoxia",
+                    "unilateral leg swelling",
+                    "pulmonary embolism",
+                ],
+                "min_matches": 2,
+            },
+            {
+                "condition": "Community-Acquired Pneumonia",
+                "likelihood": "high",
+                "keywords": ["fever", "cough", "infiltrate", "consolidation", "chest pain"],
+                "min_matches": 2,
+            },
+            {
+                "condition": "COVID-19 Pneumonitis",
+                "likelihood": "moderate",
+                "keywords": ["fever", "cough", "bilateral", "opacity"],
+                "min_matches": 2,
+            },
+            {
+                "condition": "Pulmonary Edema",
+                "likelihood": "moderate",
+                "keywords": ["edema", "cardiomegaly", "breathlessness", "orthopnea"],
+                "min_matches": 2,
+            },
+            {
+                "condition": "Asthma Exacerbation",
+                "likelihood": "moderate",
+                "keywords": ["wheeze", "shortness of breath", "tightness"],
+                "min_matches": 2,
+            },
+            {
+                "condition": "Pneumonia with Pleurisy",
+                "likelihood": "low",
+                "keywords": ["pleuritic", "pleurisy", "pleuritic chest pain", "fever", "cough"],
+                "min_matches": 2,
+            },
+            {
+                "condition": "Acute Bronchitis",
+                "likelihood": "low",
+                "keywords": ["cough", "sputum", "fever"],
+                "min_matches": 2,
+            },
         ]
 
+        likelihood_priority = {"high": 0, "moderate": 1, "low": 2}
+
         conditions: list[RelevantCondition] = []
-        for condition, likelihood, keywords in rules:
-            matched = [keyword for keyword in keywords if keyword in symptom_blob]
-            if matched:
+        for rule in rules:
+            matched = [keyword for keyword in rule["keywords"] if keyword in symptom_blob]
+            if len(matched) >= rule["min_matches"]:
                 conditions.append(
                     RelevantCondition(
-                        condition=condition,
-                        likelihood=likelihood,
+                        condition=rule["condition"],
+                        likelihood=rule["likelihood"],
                         supporting_symptoms=matched,
                         supporting_evidence_indices=list(range(min(len(matched), 3))),
                     )
                 )
+
+        conditions.sort(
+            key=lambda item: (
+                likelihood_priority.get(item.likelihood, 9),
+                -len(item.supporting_symptoms),
+            )
+        )
 
         if not conditions:
             conditions.append(
