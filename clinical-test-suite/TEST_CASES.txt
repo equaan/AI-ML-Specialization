@@ -1,0 +1,335 @@
+MediAgent Manual Test Cases
+
+Purpose:
+Use these cases to validate the end-to-end app behavior with real assets from this repository.
+
+Where to run:
+1) Open the app UI.
+2) Go to New Analysis.
+3) For each case, use the exact suggested input.
+4) After run, verify Results, Evidence, Lab Report, and Records pages.
+
+Important:
+- data/raw/mimic_cxr is empty in this workspace, so no chest X-ray image is included yet.
+- The image cases below use HAM10000 skin lesion images currently available.
+- This file is the self-contained test plan for assets under clinical-test-suite/.
+
+==================================================
+TEST CASE 1 - Skin Lesion + Sepsis Guideline Context
+==================================================
+Goal:
+Validate multimodal run with both image + PDF + symptoms.
+
+Image to upload:
+clinical-test-suite/images/skin/ISIC_0024315.jpg
+
+PDF report to upload:
+clinical-test-suite/reports/guidelines/suspected-sepsis-in-under-16s-recognition-diagnosis-and-early-management-pdf-66144017065669.pdf
+
+Text to enter in symptom box:
+"Patient has fever for 3 days, tachycardia, fatigue, reduced appetite, and worsening weakness. Family reports child appears less responsive today."
+
+Expected result:
+- Analysis succeeds with a session ID.
+- Differential diagnosis list is not empty.
+- Red flags include urgency/critical warning style language.
+- Recommended next steps are actionable (tests/referral/monitoring items).
+- Disclaimer appears at the end of the report.
+- Records page includes this run after completion.
+
+==================================================
+TEST CASE 2 - Skin Lesion + Pneumonia Guideline Context
+==================================================
+Goal:
+Validate that unrelated image/report combinations still produce stable structured output.
+
+Image to upload:
+clinical-test-suite/images/skin/ISIC_0024322.jpg
+
+PDF report to upload:
+clinical-test-suite/reports/guidelines/pneumonia-diagnosis-and-management-pdf-66144010347205.pdf
+
+Text to enter in symptom box:
+"Adult with persistent cough, mild fever, chest discomfort while breathing, and shortness of breath for 5 days. No known chronic lung disease."
+
+Expected result:
+- Analysis succeeds without backend error.
+- Output remains structured (summary, differential, red flags, next steps, disclaimer).
+- At least one respiratory-related condition should appear in differential context.
+- Export buttons for JSON/Markdown/PDF are enabled for the session.
+
+==================================================
+TEST CASE 3 - Text + PDF Only (No Image)
+==================================================
+Goal:
+Validate conditional pipeline path when image is omitted.
+
+Image to upload:
+None
+
+PDF report to upload:
+clinical-test-suite/reports/guidelines/recentonset-chest-pain-of-suspected-cardiac-origin-assessment-and-diagnosis-pdf-975751034821.pdf
+
+Text to enter in symptom box:
+"New-onset chest pain for 2 hours, pressure-like sensation radiating to left arm, mild sweating, and nausea."
+
+Expected result:
+- Analysis succeeds even without image upload.
+- No crash in vision-related sections.
+- Differential diagnosis includes cardiac-risk possibilities.
+- Red flags indicate urgency escalation language.
+- Lab/Evidence pages still render and do not show broken placeholders.
+
+==================================================
+TEST CASE 4 - Text Only Quick Validation
+==================================================
+Goal:
+Validate minimum valid input and speed of baseline flow.
+
+Image to upload:
+None
+
+PDF report to upload:
+None
+
+Text to enter in symptom box:
+"Fever, sore throat, dry cough, body ache for 2 days. No severe breathlessness."
+
+Expected result:
+- Analysis succeeds from text-only input.
+- Differential diagnosis still returns ranked entries with confidence scores.
+- Estimated urgency should likely be non-immediate for this symptom profile.
+- Session appears in Records and persists after page refresh.
+
+==================================================
+POST-RUN CHECKLIST (Apply after any case)
+==================================================
+1) Refresh browser page.
+   Expected: Latest report still available (persistent history loaded).
+
+2) Open Records page and click an older session.
+   Expected: Selected session loads back into current report view.
+
+3) Try export actions.
+   Expected: JSON, Markdown, and PDF export endpoints respond for that session.
+
+4) Check backend health endpoint.
+   Expected: /api/health returns valid JSON response (ok or degraded, but not server error).
+
+==================================================
+OPTIONAL FUTURE CASE (When X-ray files become available)
+==================================================
+If you later add chest X-ray files to data/raw/mimic_cxr, create:
+manual-test/images/xray/
+and add a case combining:
+- xray image
+- chest pain guideline PDF
+- chest-pain symptom text
+for stronger respiratory/cardiac multimodal validation.
+
+==================================================
+TEST CASE 5 - RSNA Chest X-ray Specialist Route
+==================================================
+Goal:
+Validate that chest modality routing triggers chest specialist behavior.
+
+Image to upload:
+clinical-test-suite/images/xray/00436515-870c-4b36-a041-de91049b9ab4.dcm
+
+PDF report to upload:
+clinical-test-suite/reports/guidelines/pneumonia-diagnosis-and-management-pdf-66144010347205.pdf
+
+Text to enter in symptom box:
+"Fever, productive cough, right-sided pleuritic chest pain, and breathlessness for 4 days."
+
+Expected result:
+- Analysis succeeds.
+- Vision findings include chest-xray-specific output (not skin lesion output).
+- Differential includes at least one respiratory condition.
+- Recommended next steps mention chest-focused workup.
+
+==================================================
+TEST CASE 6 - ISIC Skin Specialist Route
+==================================================
+Goal:
+Validate skin modality routing and specialist lesion-class output.
+
+Image to upload:
+clinical-test-suite/images/skin/ISIC_0034321.jpg
+
+PDF report to upload:
+None
+
+Text to enter in symptom box:
+"Pigmented skin lesion with recent change in color and mild itching over 2 months."
+
+Expected result:
+- Analysis succeeds.
+- Vision findings include skin lesion class style output.
+- Output includes confidence and severity hint.
+- Differential/report remains structured with disclaimer.
+
+==================================================
+TEST CASE 7 - Synthetic CAP (Report A)
+==================================================
+Goal:
+Validate pneumonia-style reasoning with systemic inflammatory markers.
+
+Image to upload:
+clinical-test-suite/images/xray/00436515-870c-4b36-a041-de91049b9ab4.dcm
+
+Note:
+Image is optional but recommended.
+
+PDF report to upload:
+clinical-test-suite/reports/guidelines/pneumonia-diagnosis-and-management-pdf-66144010347205.pdf
+
+Text to enter in symptom box:
+"52-year-old male presenting with 5 days of high-grade fever reaching 39.8C, productive cough with yellow-green sputum, right-sided pleuritic chest pain worsening on deep inspiration, SpO2 93% on room air, WBC 18400, neutrophils 85%, CRP 142, procalcitonin 1.8, sodium 131, albumin 2.9."
+
+Expected result:
+- Analysis succeeds.
+- Top differential includes Community-Acquired Pneumonia context.
+- Red flags include respiratory compromise language.
+- Urgency is urgent or immediate.
+- Next steps include chest-focused infectious workup.
+
+==================================================
+TEST CASE 8 - Synthetic DKA (Report B)
+==================================================
+Goal:
+Validate immediate urgency path for metabolic emergency with altered mental status.
+
+Image to upload:
+None
+
+PDF report to upload:
+clinical-test-suite/reports/lab/ahamed_al-farsi_lab_report.pdf
+
+Text to enter in symptom box:
+"See attached lab report. Concern: possible DKA with mental-status change."
+
+Expected result:
+- Analysis succeeds.
+- Red flags are present and urgency is immediate.
+- Recommended next steps include emergency stabilization language.
+
+==================================================
+TEST CASE 9 - Synthetic Pulmonary Embolism (Report C)
+==================================================
+Goal:
+Validate multi-factor red flag escalation for high-risk PE pattern.
+
+Image to upload:
+None
+
+PDF report to upload:
+clinical-test-suite/reports/lab/priya_menon_lab_report.pdf
+
+Text to enter in symptom box:
+"See attached lab report. Concern: possible pulmonary embolism risk profile."
+
+Expected result:
+- Pulmonary Embolism appears near top of differential.
+- Red flags include respiratory compromise and urgent escalation language.
+- Urgency is immediate.
+
+==================================================
+TEST CASE 10 - Synthetic Routine Lipid Panel (Report D)
+==================================================
+Goal:
+Validate low-acuity preventive profile does not over-escalate.
+
+Image to upload:
+None
+
+PDF report to upload:
+clinical-test-suite/reports/lab/ravi_sharma_lab_report.pdf
+
+Text to enter in symptom box:
+"Annual preventive follow-up. See attached lipid panel report."
+
+Expected result:
+- Analysis succeeds with structured report.
+- Differential includes low-acuity metabolic/cardiovascular risk framing.
+- Urgency is routine or semi-urgent, not immediate.
+
+==================================================
+TEST CASE 11 - Synthetic Skin Lesion ABCDE (Report E)
+==================================================
+Goal:
+Validate skin specialist routing plus ABCDE symptom enrichment.
+
+Image to upload:
+clinical-test-suite/images/skin/ISIC_0024315.jpg
+
+PDF report to upload:
+clinical-test-suite/reports/lab/sunita_Patel-lab_report.pdf
+
+Text to enter in symptom box:
+"Evolving pigmented lesion. See attached report and image."
+
+Expected result:
+- Analysis succeeds.
+- Vision output is skin-focused (not chest_xray/non_medical).
+- Differential includes melanoma/atypical melanocytic concern context.
+- Urgency is urgent or higher due to evolution and ABCDE risk features.
+
+==================================================
+TEST CASE 12 - MedQA Text-Only Dataset Prompt
+==================================================
+Goal:
+Validate text-only reasoning for benchmark-style clinical questions from MedQA.
+
+Image to upload:
+None
+
+PDF report to upload:
+None
+
+Text to enter in symptom box:
+"Use MedQA-style reasoning: patient with fever, pleuritic chest pain, tachycardia, and hypoxemia; prioritize top differential and urgent next tests."
+
+Expected result:
+- Analysis succeeds from text-only input.
+- Differential includes pulmonary/cardiac urgent conditions.
+- Next steps include targeted tests and escalation wording.
+
+==================================================
+TEST CASE 13 - MedMCQA Text-Only Dataset Prompt
+==================================================
+Goal:
+Validate structured output on concise exam-style prompts similar to MedMCQA.
+
+Image to upload:
+None
+
+PDF report to upload:
+None
+
+Text to enter in symptom box:
+"MedMCQA-style prompt: acute pleuritic chest pain with dyspnea and low oxygen saturation in postoperative patient; provide top 3 differentials and urgency."
+
+Expected result:
+- Analysis succeeds from text-only input.
+- Report remains structured with disclaimer.
+- Urgency is urgent or immediate.
+
+==================================================
+TEST CASE 14 - MRI Dataset Readiness Check (UTSW Glioma)
+==================================================
+Goal:
+Track readiness for MRI modality testing from available UTSW glioma data.
+
+Image to upload:
+None (current raw files are NIfTI .nii.gz and require conversion to png/jpg/dcm for UI upload)
+
+PDF report to upload:
+None
+
+Text to enter in symptom box:
+"MRI test readiness checkpoint for glioma triage workflow."
+
+Expected result:
+- Analysis succeeds with text-only fallback.
+- Team confirms MRI raw format conversion step before image-route validation.
